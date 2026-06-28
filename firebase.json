@@ -1,0 +1,8 @@
+{
+  "firestore": [
+    {
+      "database": "main-db",
+      "rules": "firestore.rules"
+    }
+  ]
+}
