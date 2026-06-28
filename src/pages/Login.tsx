@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { auth, db } from '../lib/firebase';
 import { collection, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
@@ -65,6 +65,24 @@ export default function Login() {
     }
   };
 
+  const handleResetPassword = async () => {
+    if (!email) {
+      setError('Por favor, ingresa tu email para recuperar la contraseña.');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      await sendPasswordResetEmail(auth, email);
+      setError('Se ha enviado un correo para restablecer tu contraseña. (Revisa la carpeta de spam)');
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || 'Error al enviar el correo de recuperación.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#050505] flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative">
       <div className="absolute top-6 left-6">
@@ -125,6 +143,18 @@ export default function Login() {
               {loading ? 'Procesando...' : (isRegister ? 'Crear Cuenta y Activar Prueba' : 'Iniciar sesión')}
             </button>
           </form>
+
+          {!isRegister && (
+            <div className="text-center mt-2">
+              <button
+                type="button"
+                onClick={handleResetPassword}
+                className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
+              >
+                ¿Olvidaste tu contraseña?
+              </button>
+            </div>
+          )}
 
           <div className="text-center mt-4 border-t border-white/5 pt-6">
             <button

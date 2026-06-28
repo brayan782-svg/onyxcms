@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth, db } from '../lib/firebase';
 import { signOut, onAuthStateChanged } from 'firebase/auth';
-import { collection, query, orderBy, getDocs, setDoc, updateDoc, doc, serverTimestamp, getDoc, addDoc } from 'firebase/firestore';
+import { collection, query, orderBy, getDocs, setDoc, updateDoc, doc, serverTimestamp, getDoc, addDoc, onSnapshot } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { 
   Key, Shield, LogOut, Plus, Search, 
@@ -47,17 +47,45 @@ export default function Admin() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    let unsubscribeAuth: () => void;
+    let unsubscribeLicenses: () => void;
+    let unsubscribeLogs: () => void;
+
+    unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       if (user) {
-        fetchLicenses();
-        fetchLogs();
         fetchSettings();
+
+        // Real-time licenses
+        setLoading(true);
+        const qLicenses = query(collection(db, 'licenses'), orderBy('createdAt', 'desc'));
+        unsubscribeLicenses = onSnapshot(qLicenses, (snapshot) => {
+          const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as License[];
+          setLicenses(data);
+          setLoading(false);
+        }, (error) => {
+          console.error('Error fetching licenses:', error);
+          setLoading(false);
+        });
+
+        // Real-time logs
+        const qLogs = query(collection(db, 'license_logs'), orderBy('timestamp', 'desc'));
+        unsubscribeLogs = onSnapshot(qLogs, (snapshot) => {
+          const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as LicenseLog[];
+          setLogs(data);
+        }, (error) => {
+          console.error('Error fetching logs:', error);
+        });
+
       } else {
         navigate('/login');
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      if (unsubscribeAuth) unsubscribeAuth();
+      if (unsubscribeLicenses) unsubscribeLicenses();
+      if (unsubscribeLogs) unsubscribeLogs();
+    };
   }, [navigate]);
 
   const fetchSettings = async () => {
@@ -86,32 +114,6 @@ export default function Admin() {
       console.error('Error saving url', e);
     } finally {
       setSavingUrl(false);
-    }
-  };
-
-  const fetchLogs = async () => {
-    try {
-      const q = query(collection(db, 'license_logs'), orderBy('timestamp', 'desc'));
-      const snapshot = await getDocs(q);
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as LicenseLog[];
-      setLogs(data);
-    } catch (error) {
-      console.error('Error fetching logs:', error);
-    }
-  };
-
-  const fetchLicenses = async () => {
-    setLoading(true);
-    try {
-      const q = query(collection(db, 'licenses'), orderBy('createdAt', 'desc'));
-      const snapshot = await getDocs(q);
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as License[];
-      setLicenses(data);
-    } catch (error: any) {
-      console.error('Error fetching licenses:', error);
-      alert('Error fetching licenses: ' + error.message);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -161,8 +163,6 @@ export default function Admin() {
 
       setEmail('');
       setDomain('');
-      fetchLicenses();
-      fetchLogs();
     } catch (error) {
       console.error('Error generating license:', error);
     } finally {
@@ -187,8 +187,6 @@ export default function Admin() {
         timestamp: serverTimestamp()
       });
 
-      fetchLicenses();
-      fetchLogs();
     } catch (error: any) {
       console.error('Error updating license status:', error);
       alert('Error: ' + error.message);
@@ -203,7 +201,6 @@ export default function Admin() {
         type: newType,
         updatedAt: serverTimestamp()
       });
-      fetchLicenses();
     } catch (error) {
       console.error('Error updating license type:', error);
     }
@@ -217,7 +214,6 @@ export default function Admin() {
         maxClients,
         updatedAt: serverTimestamp()
       });
-      fetchLicenses();
     } catch (error) {
       console.error('Error updating max clients:', error);
     }

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth, db } from '../lib/firebase';
 import { signOut, onAuthStateChanged } from 'firebase/auth';
-import { collection, query, where, getDocs, updateDoc, doc, serverTimestamp, setDoc, getDoc, addDoc, orderBy } from 'firebase/firestore';
+import { collection, query, where, getDocs, updateDoc, doc, serverTimestamp, setDoc, getDoc, addDoc, onSnapshot, or } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { 
   Key, Shield, LogOut, CheckCircle2, Copy, Check, Edit2, Globe, XCircle, History, RefreshCw, Plus, Users
@@ -48,21 +48,61 @@ export default function Client() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    let unsubscribeAuth: () => void;
+    let unsubscribeLicenses: () => void;
+    let unsubscribeLogs: () => void;
+
+    unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       if (user) {
         if (user.email === 'brayan782@gmail.com') {
            navigate('/admin');
         } else {
-           fetchMyLicenses(user.email || '');
-           fetchMyLogs(user.email || '');
            fetchSettings();
+           
+           // Real-time licenses
+           setLoading(true);
+           const licensesQuery = query(
+             collection(db, 'licenses'), 
+             or(where('email', '==', user.email), where('createdBy', '==', user.email))
+           );
+           unsubscribeLicenses = onSnapshot(licensesQuery, (snapshot) => {
+             const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as License[];
+             data.sort((a, b) => {
+               const timeA = a.createdAt?.seconds || a.createdAt?._seconds || 0;
+               const timeB = b.createdAt?.seconds || b.createdAt?._seconds || 0;
+               return timeB - timeA;
+             });
+             setLicenses(data);
+             setLoading(false);
+           }, (error) => {
+             console.error('Error fetching licenses in realtime:', error);
+             setLoading(false);
+           });
+
+           // Real-time logs
+           const logsQuery = query(collection(db, 'license_logs'), where('email', '==', user.email));
+           unsubscribeLogs = onSnapshot(logsQuery, (snapshot) => {
+             const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as LicenseLog[];
+             data.sort((a, b) => {
+               const timeA = a.timestamp?.seconds || a.timestamp?._seconds || 0;
+               const timeB = b.timestamp?.seconds || b.timestamp?._seconds || 0;
+               return timeB - timeA;
+             });
+             setLogs(data);
+           }, (error) => {
+             console.error('Error fetching logs in realtime:', error);
+           });
         }
       } else {
         navigate('/login');
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      if (unsubscribeAuth) unsubscribeAuth();
+      if (unsubscribeLicenses) unsubscribeLicenses();
+      if (unsubscribeLogs) unsubscribeLogs();
+    };
   }, [navigate]);
 
   const fetchSettings = async () => {
@@ -78,54 +118,6 @@ export default function Client() {
       } else {
         console.error('Error fetching settings:', e);
       }
-    }
-  };
-
-  const fetchMyLicenses = async (userEmail: string) => {
-    setLoading(true);
-    try {
-      if (!userEmail) return;
-      
-      const q1 = query(collection(db, 'licenses'), where('email', '==', userEmail));
-      const q2 = query(collection(db, 'licenses'), where('createdBy', '==', userEmail));
-      
-      const [snap1, snap2] = await Promise.all([getDocs(q1), getDocs(q2)]);
-      
-      const allDocs = new Map();
-      snap1.docs.forEach(doc => allDocs.set(doc.id, { id: doc.id, ...doc.data() }));
-      snap2.docs.forEach(doc => allDocs.set(doc.id, { id: doc.id, ...doc.data() }));
-      
-      const data = Array.from(allDocs.values()) as License[];
-      
-      // Sort by creation date desc
-      data.sort((a, b) => {
-        const timeA = a.createdAt?.seconds || a.createdAt?._seconds || 0;
-        const timeB = b.createdAt?.seconds || b.createdAt?._seconds || 0;
-        return timeB - timeA;
-      });
-      
-      setLicenses(data);
-    } catch (error: any) {
-      console.error('Error fetching licenses:', error);
-      alert('Error fetching licenses: ' + error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchMyLogs = async (userEmail: string) => {
-    try {
-      if (!userEmail) return;
-      const q = query(collection(db, 'license_logs'), where('email', '==', userEmail));
-      const snapshot = await getDocs(q);
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as LicenseLog[];
-      setLogs(data.sort((a, b) => {
-        const timeA = a.timestamp?.seconds || a.timestamp?._seconds || 0;
-        const timeB = b.timestamp?.seconds || b.timestamp?._seconds || 0;
-        return timeB - timeA;
-      }));
-    } catch (error) {
-      console.error('Error fetching logs:', error);
     }
   };
 
@@ -168,8 +160,6 @@ export default function Client() {
         timestamp: serverTimestamp()
       });
 
-      fetchMyLicenses(auth.currentUser.email);
-      fetchMyLogs(auth.currentUser.email);
     } catch (error) {
       console.error('Error creating license:', error);
     }
@@ -209,10 +199,6 @@ export default function Client() {
 
       setNewClientEmail('');
       setNewClientDomain('');
-      if (auth.currentUser?.email) {
-        fetchMyLicenses(auth.currentUser.email);
-        fetchMyLogs(auth.currentUser.email);
-      }
     } catch (error) {
       console.error('Error creating reseller license:', error);
     } finally {
@@ -242,10 +228,6 @@ export default function Client() {
 
       setEditingLicenseId(null);
       setNewDomain('');
-      if (auth.currentUser?.email) {
-        fetchMyLicenses(auth.currentUser.email);
-        fetchMyLogs(auth.currentUser.email);
-      }
     } catch (error) {
       console.error('Error updating domain:', error);
     }
@@ -266,10 +248,6 @@ export default function Client() {
         timestamp: serverTimestamp()
       });
 
-      if (auth.currentUser?.email) {
-        fetchMyLicenses(auth.currentUser.email);
-        fetchMyLogs(auth.currentUser.email);
-      }
     } catch (error: any) {
       console.error('Error toggling status:', error);
       alert('Error: ' + error.message);
@@ -293,10 +271,6 @@ export default function Client() {
         timestamp: serverTimestamp()
       });
 
-      if (auth.currentUser?.email) {
-        fetchMyLicenses(auth.currentUser.email);
-        fetchMyLogs(auth.currentUser.email);
-      }
     } catch (error) {
       console.error('Error regenerating key:', error);
     }
