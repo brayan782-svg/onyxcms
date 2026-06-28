@@ -53,8 +53,8 @@ export default function Client() {
         if (user.email === 'brayan782@gmail.com') {
            navigate('/admin');
         } else {
-           fetchMyLicenses();
-           fetchMyLogs();
+           fetchMyLicenses(user.email || '');
+           fetchMyLogs(user.email || '');
            fetchSettings();
         }
       } else {
@@ -72,18 +72,22 @@ export default function Client() {
       if (docSnap.exists()) {
         setDownloadUrl(docSnap.data().downloadUrl || '');
       }
-    } catch (e) {
-      console.error('Error fetching settings:', e);
+    } catch (e: any) {
+      if (e.message && e.message.includes('offline')) {
+        console.warn('Network offline, could not fetch settings.');
+      } else {
+        console.error('Error fetching settings:', e);
+      }
     }
   };
 
-  const fetchMyLicenses = async () => {
+  const fetchMyLicenses = async (userEmail: string) => {
     setLoading(true);
     try {
-      if (!auth.currentUser?.email) return;
+      if (!userEmail) return;
       
-      const q1 = query(collection(db, 'licenses'), where('email', '==', auth.currentUser.email));
-      const q2 = query(collection(db, 'licenses'), where('createdBy', '==', auth.currentUser.email));
+      const q1 = query(collection(db, 'licenses'), where('email', '==', userEmail));
+      const q2 = query(collection(db, 'licenses'), where('createdBy', '==', userEmail));
       
       const [snap1, snap2] = await Promise.all([getDocs(q1), getDocs(q2)]);
       
@@ -101,17 +105,18 @@ export default function Client() {
       });
       
       setLicenses(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching licenses:', error);
+      alert('Error fetching licenses: ' + error.message);
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchMyLogs = async () => {
+  const fetchMyLogs = async (userEmail: string) => {
     try {
-      if (!auth.currentUser?.email) return;
-      const q = query(collection(db, 'license_logs'), where('email', '==', auth.currentUser.email));
+      if (!userEmail) return;
+      const q = query(collection(db, 'license_logs'), where('email', '==', userEmail));
       const snapshot = await getDocs(q);
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as LicenseLog[];
       setLogs(data.sort((a, b) => {
@@ -163,8 +168,8 @@ export default function Client() {
         timestamp: serverTimestamp()
       });
 
-      fetchMyLicenses();
-      fetchMyLogs();
+      fetchMyLicenses(auth.currentUser.email);
+      fetchMyLogs(auth.currentUser.email);
     } catch (error) {
       console.error('Error creating license:', error);
     }
@@ -204,8 +209,10 @@ export default function Client() {
 
       setNewClientEmail('');
       setNewClientDomain('');
-      fetchMyLicenses();
-      fetchMyLogs();
+      if (auth.currentUser?.email) {
+        fetchMyLicenses(auth.currentUser.email);
+        fetchMyLogs(auth.currentUser.email);
+      }
     } catch (error) {
       console.error('Error creating reseller license:', error);
     } finally {
@@ -235,8 +242,10 @@ export default function Client() {
 
       setEditingLicenseId(null);
       setNewDomain('');
-      fetchMyLicenses();
-      fetchMyLogs();
+      if (auth.currentUser?.email) {
+        fetchMyLicenses(auth.currentUser.email);
+        fetchMyLogs(auth.currentUser.email);
+      }
     } catch (error) {
       console.error('Error updating domain:', error);
     }
@@ -257,10 +266,13 @@ export default function Client() {
         timestamp: serverTimestamp()
       });
 
-      fetchMyLicenses();
-      fetchMyLogs();
-    } catch (error) {
+      if (auth.currentUser?.email) {
+        fetchMyLicenses(auth.currentUser.email);
+        fetchMyLogs(auth.currentUser.email);
+      }
+    } catch (error: any) {
       console.error('Error toggling status:', error);
+      alert('Error: ' + error.message);
     }
   };
 
@@ -281,8 +293,10 @@ export default function Client() {
         timestamp: serverTimestamp()
       });
 
-      fetchMyLicenses();
-      fetchMyLogs();
+      if (auth.currentUser?.email) {
+        fetchMyLicenses(auth.currentUser.email);
+        fetchMyLogs(auth.currentUser.email);
+      }
     } catch (error) {
       console.error('Error regenerating key:', error);
     }

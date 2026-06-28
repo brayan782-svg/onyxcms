@@ -67,8 +67,12 @@ export default function Admin() {
       if (docSnap.exists()) {
         setDownloadUrl(docSnap.data().downloadUrl || '');
       }
-    } catch (e) {
-      console.error('Error fetching settings:', e);
+    } catch (e: any) {
+      if (e.message && e.message.includes('offline')) {
+        console.warn('Network offline, could not fetch settings.');
+      } else {
+        console.error('Error fetching settings:', e);
+      }
     }
   };
 
@@ -103,8 +107,9 @@ export default function Admin() {
       const snapshot = await getDocs(q);
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as License[];
       setLicenses(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching licenses:', error);
+      alert('Error fetching licenses: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -184,8 +189,9 @@ export default function Admin() {
 
       fetchLicenses();
       fetchLogs();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating license status:', error);
+      alert('Error: ' + error.message);
     }
   };
 

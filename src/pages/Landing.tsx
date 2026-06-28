@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Shield, Zap, Lock, Database, Code, Server, ChevronRight } from 'lucide-react';
+import { Shield, Zap, Lock, Database, Code, Server, ChevronRight, Globe } from 'lucide-react';
 
 export default function Landing() {
   return (
@@ -53,46 +53,175 @@ export default function Landing() {
         </div>
         
         {/* Mockup Preview */}
-        <div className="max-w-5xl mx-auto relative z-10 rounded-2xl border border-white/10 bg-[#0A0A0B] p-2 shadow-2xl shadow-cyan-900/20 overflow-hidden hidden md:block">
+        <div className="max-w-6xl mx-auto relative z-10 rounded-2xl border border-white/10 bg-[#0A0A0B] p-2 shadow-[0_0_100px_rgba(0,209,255,0.15)] overflow-hidden hidden md:block">
           <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-cyan-500/50 to-transparent"></div>
-          <div className="rounded-xl border border-white/5 bg-[#050505] overflow-hidden flex h-[400px]">
-             {/* Sidebar Mock */}
-             <div className="w-48 border-r border-white/5 p-4 flex flex-col gap-4">
-                <div className="h-6 w-24 bg-white/10 rounded mb-4"></div>
-                <div className="h-4 w-full bg-cyan-500/20 rounded"></div>
-                <div className="h-4 w-3/4 bg-white/5 rounded"></div>
-                <div className="h-4 w-5/6 bg-white/5 rounded"></div>
-                <div className="h-4 w-2/3 bg-white/5 rounded"></div>
-             </div>
-             {/* Content Mock */}
-             <div className="flex-1 p-6 flex flex-col gap-6">
-                <div className="flex justify-between items-center">
-                   <div className="h-6 w-32 bg-white/10 rounded"></div>
-                   <div className="h-8 w-8 bg-white/10 rounded-full"></div>
+          
+          {/* MU Online Admin CMS Preview */}
+          <div className="rounded-xl border border-white/5 bg-[#050505] overflow-hidden flex h-[500px] text-left">
+            {/* Sidebar Mock */}
+            <div className="w-56 border-r border-white/5 bg-black/50 p-4 flex flex-col gap-6 font-sans relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/5 rounded-full blur-2xl"></div>
+              
+              <div className="flex items-center gap-2 mb-2 z-10">
+                <div className="w-6 h-6 bg-cyan-500/20 border border-cyan-500/30 rounded flex items-center justify-center">
+                  <Shield className="w-3 h-3 text-cyan-400" />
                 </div>
-                <div className="grid grid-cols-3 gap-4">
-                   <div className="h-24 bg-white/5 rounded-lg border border-white/5 p-4 flex flex-col justify-between">
-                     <div className="h-3 w-16 bg-white/10 rounded"></div>
-                     <div className="h-8 w-12 bg-cyan-500/40 rounded"></div>
-                   </div>
-                   <div className="h-24 bg-white/5 rounded-lg border border-white/5 p-4 flex flex-col justify-between">
-                     <div className="h-3 w-20 bg-white/10 rounded"></div>
-                     <div className="h-8 w-16 bg-emerald-500/40 rounded"></div>
-                   </div>
-                   <div className="h-24 bg-white/5 rounded-lg border border-white/5 p-4 flex flex-col justify-between">
-                     <div className="h-3 w-14 bg-white/10 rounded"></div>
-                     <div className="h-8 w-10 bg-purple-500/40 rounded"></div>
-                   </div>
+                <span className="text-sm font-bold text-white tracking-wider">ONYX<span className="text-gray-500 font-light">CMS</span></span>
+              </div>
+              
+              <div className="space-y-1 z-10">
+                <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-2 px-2">Dashboard</div>
+                <div className="flex items-center gap-3 px-2 py-2 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 text-xs">
+                  <div className="w-3 h-3 rounded-sm bg-cyan-400/20"></div> System Overview
                 </div>
-                <div className="flex-1 bg-white/5 rounded-lg border border-white/5 p-4">
-                   <div className="h-4 w-32 bg-white/10 rounded mb-4"></div>
-                   <div className="space-y-3">
-                     <div className="h-3 w-full bg-white/5 rounded"></div>
-                     <div className="h-3 w-full bg-white/5 rounded"></div>
-                     <div className="h-3 w-3/4 bg-white/5 rounded"></div>
-                   </div>
+                <div className="flex items-center gap-3 px-2 py-2 rounded-lg text-gray-400 hover:bg-white/5 hover:text-gray-200 text-xs transition-colors">
+                  <div className="w-3 h-3 rounded-sm bg-white/10"></div> Global Settings
                 </div>
-             </div>
+              </div>
+
+              <div className="space-y-1 z-10">
+                <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-2 px-2">Game Management</div>
+                <div className="flex items-center gap-3 px-2 py-2 rounded-lg text-gray-400 hover:bg-white/5 hover:text-gray-200 text-xs transition-colors">
+                  <div className="w-3 h-3 rounded-sm bg-white/10"></div> Accounts Explorer
+                </div>
+                <div className="flex items-center gap-3 px-2 py-2 rounded-lg text-gray-400 hover:bg-white/5 hover:text-gray-200 text-xs transition-colors">
+                  <div className="w-3 h-3 rounded-sm bg-white/10"></div> Character Editor
+                </div>
+                <div className="flex items-center gap-3 px-2 py-2 rounded-lg text-gray-400 hover:bg-white/5 hover:text-gray-200 text-xs transition-colors">
+                  <div className="w-3 h-3 rounded-sm bg-white/10"></div> Webshop Inventory
+                </div>
+                <div className="flex items-center gap-3 px-2 py-2 rounded-lg text-gray-400 hover:bg-white/5 hover:text-gray-200 text-xs transition-colors">
+                  <div className="w-3 h-3 rounded-sm bg-white/10"></div> Guilds & Sieges
+                </div>
+              </div>
+              
+              <div className="mt-auto space-y-1 z-10">
+                <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-2 px-2">Server</div>
+                <div className="flex items-center gap-3 px-2 py-2 rounded-lg text-gray-400 hover:bg-white/5 text-xs transition-colors">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div> Live Logs
+                </div>
+              </div>
+            </div>
+            
+            {/* Content Mock */}
+            <div className="flex-1 bg-[#0A0A0B] p-6 flex flex-col gap-6 font-sans relative overflow-hidden">
+              {/* Header */}
+              <div className="flex justify-between items-center z-10">
+                <div>
+                  <h2 className="text-lg font-bold text-white tracking-tight">System Overview</h2>
+                  <p className="text-xs text-gray-500">Real-time statistics for MU Online server.</p>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3 bg-black/40 border border-white/5 rounded-lg px-3 py-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span className="text-xs text-gray-300 font-mono font-bold">GameServer: ONLINE</span>
+                  </div>
+                  <div className="w-8 h-8 rounded border border-white/10 bg-cyan-900/30 flex items-center justify-center text-xs font-bold text-cyan-400">
+                    AD
+                  </div>
+                </div>
+              </div>
+              
+              {/* Stats Grid */}
+              <div className="grid grid-cols-4 gap-4 z-10">
+                <div className="bg-black/40 border border-white/5 rounded-xl p-4 relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity"><Database className="w-16 h-16 text-blue-500 -mt-2 -mr-2" /></div>
+                  <div className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Total Accounts</div>
+                  <div className="text-2xl font-bold text-white mb-2">15,842</div>
+                  <div className="text-[10px] text-emerald-400 flex items-center gap-1">+342 this week</div>
+                </div>
+                <div className="bg-black/40 border border-white/5 rounded-xl p-4 relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity"><Zap className="w-16 h-16 text-cyan-500 -mt-2 -mr-2" /></div>
+                  <div className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Characters</div>
+                  <div className="text-2xl font-bold text-cyan-400 mb-2">42,105</div>
+                  <div className="text-[10px] text-emerald-400 flex items-center gap-1">Top Class: Blade Knight</div>
+                </div>
+                <div className="bg-black/40 border border-white/5 rounded-xl p-4 relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity"><Shield className="w-16 h-16 text-purple-500 -mt-2 -mr-2" /></div>
+                  <div className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Active VIPs</div>
+                  <div className="text-2xl font-bold text-white mb-2">2,450</div>
+                  <div className="text-[10px] text-cyan-400 flex items-center gap-1">32% of active playerbase</div>
+                </div>
+                <div className="bg-black/40 border border-white/5 rounded-xl p-4 relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity"><Globe className="w-16 h-16 text-emerald-500 -mt-2 -mr-2" /></div>
+                  <div className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">WCoins Circulating</div>
+                  <div className="text-2xl font-bold text-emerald-400 mb-2">1.2M</div>
+                  <div className="text-[10px] text-emerald-400 flex items-center gap-1">Healthy economy</div>
+                </div>
+              </div>
+              
+              {/* Tables Area */}
+              <div className="flex gap-4 flex-1 z-10">
+                {/* Recent Accounts Table */}
+                <div className="flex-[2] bg-black/40 border border-white/5 rounded-xl p-5 flex flex-col">
+                  <div className="flex justify-between items-center mb-4">
+                    <div className="text-sm font-bold text-white">Latest Registrations</div>
+                    <div className="text-[10px] text-cyan-500 cursor-pointer hover:text-cyan-400">View Full List</div>
+                  </div>
+                  <div className="flex-1 flex flex-col gap-2">
+                    <div className="grid grid-cols-4 gap-4 px-3 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider border-b border-white/5">
+                      <div>Account ID</div>
+                      <div>Email Address</div>
+                      <div>Status</div>
+                      <div className="text-right">Join Date</div>
+                    </div>
+                    {[
+                      { id: 'darksoul99', email: 'user1@email.com', status: 'Active', date: 'Just now' },
+                      { id: 'elfmaster', email: 'test2@email.com', status: 'Pending', date: '5 mins ago' },
+                      { id: 'blade_x', email: 'blade@email.com', status: 'Active', date: '12 mins ago' },
+                      { id: 'magic_pro', email: 'magic@email.com', status: 'Banned', date: '1 hour ago' },
+                    ].map((row, i) => (
+                      <div key={i} className="grid grid-cols-4 gap-4 px-3 py-2 text-xs items-center bg-white/[0.02] rounded border border-white/[0.02] hover:bg-white/[0.04] transition-colors cursor-pointer">
+                        <div className="font-mono text-gray-300">{row.id}</div>
+                        <div className="text-gray-500 truncate">{row.email}</div>
+                        <div>
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                            row.status === 'Active' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 
+                            row.status === 'Banned' ? 'bg-red-500/10 text-red-400 border border-red-500/20' :
+                            'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20'
+                          }`}>
+                            {row.status}
+                          </span>
+                        </div>
+                        <div className="text-right text-gray-500">{row.date}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Live Activity Mock */}
+                <div className="flex-1 bg-black/40 border border-white/5 rounded-xl p-5 flex flex-col">
+                  <div className="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                    Live Server Logs
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  </div>
+                  <div className="flex flex-col gap-2 font-mono text-[10px]">
+                    {[
+                      { time: '14:22:01', msg: '[Webshop] User darksoul99 bought Wings of Dragon', type: 'info' },
+                      { time: '14:21:45', msg: '[Auth] Failed login attempt for user admin', type: 'warn' },
+                      { time: '14:20:12', msg: '[Game] Blood Castle 7 finished', type: 'info' },
+                      { time: '14:18:55', msg: '[System] Auto-backup completed', type: 'success' },
+                      { time: '14:15:22', msg: '[Webshop] User elfmaster bought 1000 WCoins', type: 'success' },
+                      { time: '14:12:10', msg: '[Game] Chaos Goblin mix failed for blade_x', type: 'info' }
+                    ].map((log, i) => (
+                      <div key={i} className="flex gap-2 p-1.5 rounded bg-black/50 border border-white/5">
+                        <span className="text-gray-600 shrink-0">[{log.time}]</span>
+                        <span className={`
+                          ${log.type === 'warn' ? 'text-yellow-400' : 
+                            log.type === 'success' ? 'text-emerald-400' : 
+                            'text-cyan-400/70'}
+                        `}>
+                          {log.msg}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              
+              {/* Background Glow */}
+              <div className="absolute -bottom-20 -right-20 w-96 h-96 bg-cyan-500/10 rounded-full blur-[100px] pointer-events-none"></div>
+            </div>
           </div>
         </div>
       </section>
