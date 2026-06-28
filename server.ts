@@ -1,35 +1,15 @@
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
-import { initializeApp, cert, applicationDefault } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
+import { initializeApp } from 'firebase/app';
+import { getFirestore, collection, query, where, getDocs } from 'firebase/firestore';
 
 import fs from 'fs';
 import firebaseConfig from './firebase-applet-config.json';
 
-// Initialize Firebase Admin
-try {
-  if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
-    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
-    initializeApp({
-      credential: cert(serviceAccount),
-      projectId: firebaseConfig.projectId
-    });
-    console.log('Firebase Admin initialized with service account key.');
-  } else {
-    initializeApp({
-      credential: applicationDefault(),
-      projectId: firebaseConfig.projectId
-    });
-    console.log('Firebase Admin initialized with application default credentials.');
-  }
-} catch (error) {
-  console.log('Firebase Admin already initialized or failed:', error);
-}
-
-const db = getFirestore();
-// Configurar la base de datos correcta para Cloud Firestore
-db.settings({ databaseId: firebaseConfig.firestoreDatabaseId });
+// Initialize Firebase Client SDK instead of Admin
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getFirestore(firebaseApp, firebaseConfig.firestoreDatabaseId);
 
 export const app = express();
 const PORT = 3000;
@@ -65,9 +45,10 @@ app.all('/api/master-license/validate', async (req, res) => {
       }
 
       // Get Firestore document by license_key
-      const licensesRef = db.collection('licenses');
+      const licensesRef = collection(db, 'licenses');
+      const q = query(licensesRef, where('key', '==', license_key));
       console.log('Fetching docs from Firestore...');
-      const snapshot = await licensesRef.where('key', '==', license_key).get();
+      const snapshot = await getDocs(q);
       console.log('Snapshot received, empty:', snapshot.empty);
 
       if (snapshot.empty) {

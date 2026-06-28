@@ -57,20 +57,31 @@ export default function Admin() {
 
         // Real-time licenses
         setLoading(true);
-        const qLicenses = query(collection(db, 'licenses'), orderBy('createdAt', 'desc'));
+        const qLicenses = query(collection(db, 'licenses'));
         unsubscribeLicenses = onSnapshot(qLicenses, (snapshot) => {
           const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as License[];
+          data.sort((a, b) => {
+            const timeA = a.createdAt?.seconds || a.createdAt?._seconds || 0;
+            const timeB = b.createdAt?.seconds || b.createdAt?._seconds || 0;
+            return timeB - timeA;
+          });
           setLicenses(data);
           setLoading(false);
         }, (error) => {
           console.error('Error fetching licenses:', error);
+          alert('Error fetching licenses: ' + error.message);
           setLoading(false);
         });
 
         // Real-time logs
-        const qLogs = query(collection(db, 'license_logs'), orderBy('timestamp', 'desc'));
+        const qLogs = query(collection(db, 'license_logs'));
         unsubscribeLogs = onSnapshot(qLogs, (snapshot) => {
           const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as LicenseLog[];
+          data.sort((a, b) => {
+            const timeA = a.timestamp?.seconds || a.timestamp?._seconds || 0;
+            const timeB = b.timestamp?.seconds || b.timestamp?._seconds || 0;
+            return timeB - timeA;
+          });
           setLogs(data);
         }, (error) => {
           console.error('Error fetching logs:', error);
@@ -133,6 +144,12 @@ export default function Admin() {
 
       const licenseKey = generateLicenseKey();
       const normalizedEmail = email.toLowerCase().trim();
+      
+      if (licenses.some(l => l.email === normalizedEmail)) {
+        alert('Este correo electrónico ya tiene una licencia registrada.');
+        setGenerating(false);
+        return;
+      }
       
       const newLicense: any = {
         key: licenseKey,

@@ -61,18 +61,17 @@ export default function Client() {
            
            // Real-time licenses
            setLoading(true);
-           const userEmail = user.email?.toLowerCase() || '';
-           const q1 = query(collection(db, 'licenses'), where('email', '==', userEmail));
-           const q2 = query(collection(db, 'licenses'), where('createdBy', '==', userEmail));
+           const userEmail = user.email?.toLowerCase().trim() || '';
+           const qLicenses = query(
+             collection(db, 'licenses'), 
+             or(
+               where('email', '==', userEmail),
+               where('createdBy', '==', userEmail)
+             )
+           );
            
-           let licensesFromQ1: License[] = [];
-           let licensesFromQ2: License[] = [];
-
-           const updateMergedLicenses = () => {
-             const allDocs = new Map();
-             licensesFromQ1.forEach(l => allDocs.set(l.id, l));
-             licensesFromQ2.forEach(l => allDocs.set(l.id, l));
-             const data = Array.from(allDocs.values());
+           unsubscribeLicenses = onSnapshot(qLicenses, (snapshot) => {
+             const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as License[];
              data.sort((a, b) => {
                const timeA = a.createdAt?.seconds || a.createdAt?._seconds || 0;
                const timeB = b.createdAt?.seconds || b.createdAt?._seconds || 0;
@@ -80,28 +79,11 @@ export default function Client() {
              });
              setLicenses(data);
              setLoading(false);
-           };
-
-           const unsub1 = onSnapshot(q1, (snapshot) => {
-             licensesFromQ1 = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as License[];
-             updateMergedLicenses();
            }, (error) => {
-             console.error('Error fetching licenses in realtime (q1):', error);
+             console.error('Error fetching licenses in realtime:', error);
+             alert('Error fetching licenses: ' + error.message);
              setLoading(false);
            });
-
-           const unsub2 = onSnapshot(q2, (snapshot) => {
-             licensesFromQ2 = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as License[];
-             updateMergedLicenses();
-           }, (error) => {
-             console.error('Error fetching licenses in realtime (q2):', error);
-             setLoading(false);
-           });
-
-           unsubscribeLicenses = () => {
-             unsub1();
-             unsub2();
-           };
 
            // Real-time logs
            const logsQuery = query(collection(db, 'license_logs'), where('email', '==', userEmail));
@@ -165,6 +147,11 @@ export default function Client() {
       const licenseKey = generateLicenseKey();
       const normalizedEmail = auth.currentUser.email.toLowerCase();
 
+      if (licenses.some(l => l.email === normalizedEmail)) {
+        alert('Ya tienes una licencia registrada para esta cuenta.');
+        return;
+      }
+
       const newLicense = {
         key: licenseKey,
         email: normalizedEmail,
@@ -185,8 +172,9 @@ export default function Client() {
         timestamp: serverTimestamp()
       });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating license:', error);
+      alert('Error creating license: ' + error.message);
     }
   };
 
@@ -202,6 +190,12 @@ export default function Client() {
       const licenseKey = generateLicenseKey();
       const normalizedEmail = newClientEmail.toLowerCase().trim();
       const creatorEmail = auth.currentUser.email.toLowerCase();
+
+      if (licenses.some(l => l.email === normalizedEmail)) {
+        alert('Este correo electrónico ya tiene una licencia registrada.');
+        setGenerating(false);
+        return;
+      }
 
       const newLicense = {
         key: licenseKey,
