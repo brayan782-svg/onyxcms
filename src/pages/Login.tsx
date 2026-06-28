@@ -59,7 +59,19 @@ export default function Login() {
       navigate('/');
     } catch (err: any) {
       console.error(err);
-      setError(err.message || 'Fallo en la autenticación. Por favor, inténtelo de nuevo.');
+      
+      let errorMessage = 'Fallo en la autenticación. Por favor, inténtelo de nuevo.';
+      if (err.code === 'auth/email-already-in-use') {
+        errorMessage = 'El correo electrónico ya está registrado.';
+      } else if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') {
+        errorMessage = 'Credenciales inválidas. Correo o contraseña incorrectos.';
+      } else if (err.code === 'auth/weak-password') {
+        errorMessage = 'La contraseña es demasiado débil. Debe tener al menos 6 caracteres.';
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

@@ -61,12 +61,18 @@ export default function Client() {
            
            // Real-time licenses
            setLoading(true);
-           const licensesQuery = query(
-             collection(db, 'licenses'), 
-             or(where('email', '==', user.email), where('createdBy', '==', user.email))
-           );
-           unsubscribeLicenses = onSnapshot(licensesQuery, (snapshot) => {
-             const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as License[];
+           const userEmail = user.email?.toLowerCase() || '';
+           const q1 = query(collection(db, 'licenses'), where('email', '==', userEmail));
+           const q2 = query(collection(db, 'licenses'), where('createdBy', '==', userEmail));
+           
+           let licensesFromQ1: License[] = [];
+           let licensesFromQ2: License[] = [];
+
+           const updateMergedLicenses = () => {
+             const allDocs = new Map();
+             licensesFromQ1.forEach(l => allDocs.set(l.id, l));
+             licensesFromQ2.forEach(l => allDocs.set(l.id, l));
+             const data = Array.from(allDocs.values());
              data.sort((a, b) => {
                const timeA = a.createdAt?.seconds || a.createdAt?._seconds || 0;
                const timeB = b.createdAt?.seconds || b.createdAt?._seconds || 0;
@@ -74,13 +80,31 @@ export default function Client() {
              });
              setLicenses(data);
              setLoading(false);
+           };
+
+           const unsub1 = onSnapshot(q1, (snapshot) => {
+             licensesFromQ1 = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as License[];
+             updateMergedLicenses();
            }, (error) => {
-             console.error('Error fetching licenses in realtime:', error);
+             console.error('Error fetching licenses in realtime (q1):', error);
              setLoading(false);
            });
 
+           const unsub2 = onSnapshot(q2, (snapshot) => {
+             licensesFromQ2 = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as License[];
+             updateMergedLicenses();
+           }, (error) => {
+             console.error('Error fetching licenses in realtime (q2):', error);
+             setLoading(false);
+           });
+
+           unsubscribeLicenses = () => {
+             unsub1();
+             unsub2();
+           };
+
            // Real-time logs
-           const logsQuery = query(collection(db, 'license_logs'), where('email', '==', user.email));
+           const logsQuery = query(collection(db, 'license_logs'), where('email', '==', userEmail));
            unsubscribeLogs = onSnapshot(logsQuery, (snapshot) => {
              const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as LicenseLog[];
              data.sort((a, b) => {
@@ -139,10 +163,11 @@ export default function Client() {
     try {
       if (!auth.currentUser?.email) return;
       const licenseKey = generateLicenseKey();
+      const normalizedEmail = auth.currentUser.email.toLowerCase();
 
       const newLicense = {
         key: licenseKey,
-        email: auth.currentUser.email,
+        email: normalizedEmail,
         domain: 'tusitio.com',
         type: 'standard',
         status: 'active',
@@ -153,7 +178,7 @@ export default function Client() {
       await setDoc(newDocRef, newLicense);
       
       await addDoc(collection(db, 'license_logs'), {
-        email: auth.currentUser.email,
+        email: normalizedEmail,
         licenseId: newDocRef.id,
         action: 'created',
         newDomain: 'tusitio.com',
@@ -175,14 +200,16 @@ export default function Client() {
     try {
       if (!auth.currentUser?.email) return;
       const licenseKey = generateLicenseKey();
+      const normalizedEmail = newClientEmail.toLowerCase().trim();
+      const creatorEmail = auth.currentUser.email.toLowerCase();
 
       const newLicense = {
         key: licenseKey,
-        email: auth.currentUser.email,
+        email: normalizedEmail,
         domain: newClientDomain,
         type: 'standard',
         status: 'active',
-        createdBy: auth.currentUser.email,
+        createdBy: creatorEmail,
         createdAt: serverTimestamp(),
       };
 
@@ -190,7 +217,7 @@ export default function Client() {
       await setDoc(newDocRef, newLicense);
       
       await addDoc(collection(db, 'license_logs'), {
-        email: auth.currentUser.email,
+        email: creatorEmail,
         licenseId: newDocRef.id,
         action: 'created_by_reseller',
         newDomain: newClientDomain,
@@ -228,8 +255,9 @@ export default function Client() {
 
       setEditingLicenseId(null);
       setNewDomain('');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating domain:', error);
+      alert('Error updating domain: ' + error.message);
     }
   };
 
@@ -420,6 +448,7 @@ export default function Client() {
                       <th className="px-6 py-3 font-medium">Clave / Dominio</th>
                       <th className="px-6 py-3 font-medium">Email</th>
                       <th className="px-6 py-3 font-medium">Tipo</th>
+                      <th className="px-6 py-3 font-medium">Fecha de Creación</th>
                       <th className="px-6 py-3 font-medium">Acciones</th>
                     </tr>
                   </thead>
@@ -446,10 +475,10 @@ export default function Client() {
                                   onChange={(e) => setNewDomain(e.target.value)}
                                   className="bg-black/40 border border-cyan-500/50 rounded px-2 py-1 text-xs text-white focus:outline-none"
                                 />
-                                <button onClick={() => handleUpdateDomain(license.id)} className="text-cyan-400">
+                                <button type="button" onClick={() => handleUpdateDomain(license.id)} className="text-cyan-400">
                                   <Check className="w-4 h-4" />
                                 </button>
-                                <button onClick={() => setEditingLicenseId(null)} className="text-gray-500">
+                                <button type="button" onClick={() => setEditingLicenseId(null)} className="text-gray-500">
                                   <XCircle className="w-4 h-4" />
                                 </button>
                               </div>
@@ -460,6 +489,7 @@ export default function Client() {
                                 </span>
                                 {license.status === 'active' && (
                                   <button 
+                                    type="button"
                                     onClick={() => {
                                       setEditingLicenseId(license.id);
                                       setNewDomain(license.domain);
@@ -488,10 +518,14 @@ export default function Client() {
                             {license.type === 'trial' ? 'Prueba' : license.type === 'standard' ? 'Estándar' : license.type === 'reseller' ? `Reseller` : 'Ilimitado'}
                           </span>
                         </td>
+                        <td className="px-6 py-4 text-xs text-gray-400 whitespace-nowrap">
+                          <span>{(license.createdAt?.seconds || license.createdAt?._seconds) ? format(new Date((license.createdAt.seconds || license.createdAt._seconds) * 1000), 'MMM dd, yyyy') : '...'}</span>
+                        </td>
                         <td className="px-6 py-4">
                           {license.status === 'active' ? (
                             <div className="flex gap-2">
                               <button
+                                type="button"
                                 onClick={() => {
                                   if(window.confirm('¿Estás seguro de regenerar la clave? La clave anterior dejará de funcionar.')) {
                                     handleRegenerateKey(license.id);
@@ -503,6 +537,7 @@ export default function Client() {
                               </button>
                               {license.createdBy === auth.currentUser?.email && license.type !== 'reseller' && (
                                 <button
+                                  type="button"
                                   onClick={() => handleToggleStatus(license.id, license.status)}
                                   className="px-2 py-1 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded hover:bg-rose-500/20 transition-colors flex items-center gap-1 text-[10px] font-bold uppercase"
                                 >
@@ -517,6 +552,7 @@ export default function Client() {
                               </span>
                               {license.createdBy === auth.currentUser?.email && license.type !== 'reseller' && (
                                 <button
+                                  type="button"
                                   onClick={() => handleToggleStatus(license.id, license.status)}
                                   className="px-2 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded hover:bg-emerald-500/20 transition-colors flex items-center gap-1 text-[10px] font-bold uppercase"
                                 >

@@ -132,9 +132,11 @@ export default function Admin() {
       if (!auth.currentUser) return navigate('/');
 
       const licenseKey = generateLicenseKey();
+      const normalizedEmail = email.toLowerCase().trim();
+      
       const newLicense: any = {
         key: licenseKey,
-        email,
+        email: normalizedEmail,
         domain,
         type,
         status: 'active',
@@ -201,8 +203,9 @@ export default function Admin() {
         type: newType,
         updatedAt: serverTimestamp()
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating license type:', error);
+      alert('Error: ' + error.message);
     }
   };
 
@@ -214,8 +217,9 @@ export default function Admin() {
         maxClients,
         updatedAt: serverTimestamp()
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating max clients:', error);
+      alert('Error: ' + error.message);
     }
   };
 
@@ -441,6 +445,7 @@ export default function Admin() {
                       <td className="px-6 py-4 text-right">
                         {license.status === 'active' ? (
                           <button 
+                            type="button"
                             onClick={() => handleToggleStatus(license.id, license.status, license.email)} 
                             title="Clic para Revocar" 
                             className="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-bold uppercase tracking-wider border border-emerald-500/20 hover:bg-rose-500/10 hover:text-rose-500 hover:border-rose-500/20 transition-all"
@@ -449,6 +454,7 @@ export default function Admin() {
                           </button>
                         ) : (
                           <button 
+                            type="button"
                             onClick={() => handleToggleStatus(license.id, license.status, license.email)} 
                             title="Clic para Reactivar" 
                             className="px-2.5 py-1 rounded-full bg-rose-500/10 text-rose-500 text-[10px] font-bold uppercase tracking-wider border border-rose-500/20 hover:bg-emerald-500/10 hover:text-emerald-400 hover:border-emerald-500/20 transition-all"
