@@ -5,8 +5,7 @@ import { initializeApp, cert, applicationDefault } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
 import fs from 'fs';
-
-const firebaseConfig = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'firebase-applet-config.json'), 'utf8'));
+import firebaseConfig from './firebase-applet-config.json';
 
 // Initialize Firebase Admin
 try {
@@ -144,7 +143,8 @@ app.all('/api/master-license/validate', async (req, res) => {
 async function setupVite() {
   if (!process.env.VERCEL) {
     if (process.env.NODE_ENV !== 'production') {
-      const { createServer: createViteServer } = await import('vite');
+      const viteModule = 'vite';
+      const { createServer: createViteServer } = await import(/* @vite-ignore */ viteModule);
       const vite = await createViteServer({
         server: { middlewareMode: true },
         appType: 'spa',
