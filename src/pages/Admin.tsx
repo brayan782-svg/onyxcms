@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth, db } from '../lib/firebase';
 import { signOut, onAuthStateChanged } from 'firebase/auth';
-import { collection, query, orderBy, getDocs, setDoc, updateDoc, doc, serverTimestamp, getDoc, addDoc, onSnapshot } from 'firebase/firestore';
+import { collection, query, orderBy, getDocs, setDoc, updateDoc, doc, serverTimestamp, getDoc, addDoc, onSnapshot, deleteDoc, deleteField } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { 
   Key, Shield, LogOut, Plus, Search, 
-  CheckCircle2, XCircle, Copy, Check, History
+  CheckCircle2, XCircle, Copy, Check, History, Trash2
 } from 'lucide-react';
 
 interface License {
@@ -39,7 +39,9 @@ export default function Admin() {
   const [email, setEmail] = useState('');
   const [domain, setDomain] = useState('');
   const [type, setType] = useState('trial');
+  const [deletingLicenseId, setDeletingLicenseId] = useState<string | null>(null);
   const [maxClients, setMaxClients] = useState<number>(10);
+  const [showResellerClients, setShowResellerClients] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [downloadUrl, setDownloadUrl] = useState('');
   const [savingUrl, setSavingUrl] = useState(false);
@@ -182,8 +184,10 @@ export default function Admin() {
 
       setEmail('');
       setDomain('');
-    } catch (error) {
+      alert('Licencia generada correctamente.');
+    } catch (error: any) {
       console.error('Error generating license:', error);
+      alert('Error generating license: ' + error.message);
     } finally {
       setGenerating(false);
     }
@@ -212,14 +216,49 @@ export default function Admin() {
     }
   };
 
+  const handleDeleteLicense = async (id: string, email: string) => {
+    try {
+      if (!auth.currentUser) return;
+      
+      if (deletingLicenseId !== id) {
+        setDeletingLicenseId(id);
+        // Automatically reset the confirmation after 3 seconds
+        setTimeout(() => {
+          setDeletingLicenseId((current) => current === id ? null : current);
+        }, 3000);
+        return;
+      }
+
+      await deleteDoc(doc(db, 'licenses', id));
+      setDeletingLicenseId(null);
+      
+      await addDoc(collection(db, 'license_logs'), {
+        email: email,
+        licenseId: id,
+        action: 'license_deleted',
+        timestamp: serverTimestamp()
+      });
+
+    } catch (error: any) {
+      console.error('Error deleting license:', error);
+      alert('Error: ' + error.message);
+    }
+  };
+
   const handleUpdateType = async (id: string, newType: string) => {
     try {
       if (!auth.currentUser) return;
 
-      await updateDoc(doc(db, 'licenses', id), {
+      const updateData: any = {
         type: newType,
         updatedAt: serverTimestamp()
-      });
+      };
+
+      if (newType !== 'trial') {
+        updateData.expiresAt = deleteField();
+      }
+
+      await updateDoc(doc(db, 'licenses', id), updateData);
     } catch (error: any) {
       console.error('Error updating license type:', error);
       alert('Error: ' + error.message);
@@ -395,6 +434,18 @@ export default function Admin() {
           <div className="onyx-card shrink-0 flex flex-col">
             <div className="px-6 py-4 border-b border-white/5 flex justify-between items-center shrink-0">
               <h3 className="text-sm font-semibold text-white">Licencias Recientes</h3>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <span className="text-xs text-gray-400">Mostrar clientes de Resellers</span>
+                <input 
+                  type="checkbox" 
+                  className="sr-only"
+                  checked={showResellerClients}
+                  onChange={(e) => setShowResellerClients(e.target.checked)}
+                />
+                <div className={`w-8 h-4 rounded-full transition-colors ${showResellerClients ? 'bg-cyan-500' : 'bg-gray-600'} relative`}>
+                  <div className={`w-3 h-3 bg-white rounded-full absolute top-0.5 transition-transform ${showResellerClients ? 'translate-x-4.5' : 'translate-x-0.5'}`} />
+                </div>
+              </label>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
@@ -402,12 +453,12 @@ export default function Admin() {
                   <tr>
                     <th className="px-6 py-3 font-medium">Clave de Licencia</th>
                     <th className="px-6 py-3 font-medium">Cliente / Dominio</th>
-                    <th className="px-6 py-3 font-medium">Creada</th>
+                    <th className="px-6 py-3 font-medium">Fechas</th>
                     <th className="px-6 py-3 font-medium text-right">Estado</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
-                  {licenses.map(license => (
+                  {licenses.filter(l => showResellerClients || !l.createdBy || l.createdBy === auth.currentUser?.email || l.createdBy === l.email).map(license => (
                     <tr key={license.id} className="hover:bg-white/[0.02] transition-colors">
                       <td className={`px-6 py-4 font-mono ${license.status === 'active' ? 'text-cyan-400' : 'text-gray-500 line-through'}`}>
                         <div className="flex items-center gap-2">
@@ -456,29 +507,48 @@ export default function Admin() {
                       </td>
                       <td className="px-6 py-4 text-xs text-gray-400 whitespace-nowrap">
                         <div className="flex flex-col gap-1">
-                          <span>{(license.createdAt?.seconds || license.createdAt?._seconds) ? format(new Date((license.createdAt.seconds || license.createdAt._seconds) * 1000), 'MMM dd, yyyy') : '...'}</span>
+                          <span>Creación: {(license.createdAt?.seconds || license.createdAt?._seconds) ? format(new Date((license.createdAt.seconds || license.createdAt._seconds) * 1000), 'MMM dd, yyyy') : '...'}</span>
+                          {license.type === 'trial' && license.expiresAt && (
+                            <span className="text-amber-400">
+                              Expira: {(license.expiresAt?.seconds || license.expiresAt?._seconds) ? format(new Date((license.expiresAt.seconds || license.expiresAt._seconds) * 1000), 'MMM dd, yyyy') : '...'}
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        {license.status === 'active' ? (
-                          <button 
+                        <div className="flex items-center justify-end gap-2">
+                          {license.status === 'active' ? (
+                            <button 
+                              type="button"
+                              onClick={() => handleToggleStatus(license.id, license.status, license.email)} 
+                              title="Clic para Revocar" 
+                              className="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-bold uppercase tracking-wider border border-emerald-500/20 hover:bg-rose-500/10 hover:text-rose-500 hover:border-rose-500/20 transition-all"
+                            >
+                              Activa
+                            </button>
+                          ) : (
+                            <button 
+                              type="button"
+                              onClick={() => handleToggleStatus(license.id, license.status, license.email)} 
+                              title="Clic para Reactivar" 
+                              className="px-2.5 py-1 rounded-full bg-rose-500/10 text-rose-500 text-[10px] font-bold uppercase tracking-wider border border-rose-500/20 hover:bg-emerald-500/10 hover:text-emerald-400 hover:border-emerald-500/20 transition-all"
+                            >
+                              Revocada
+                            </button>
+                          )}
+                          <button
                             type="button"
-                            onClick={() => handleToggleStatus(license.id, license.status, license.email)} 
-                            title="Clic para Revocar" 
-                            className="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-bold uppercase tracking-wider border border-emerald-500/20 hover:bg-rose-500/10 hover:text-rose-500 hover:border-rose-500/20 transition-all"
+                            onClick={() => handleDeleteLicense(license.id, license.email)}
+                            title={deletingLicenseId === license.id ? "Click de nuevo para confirmar" : "Eliminar Cuenta/Licencia"}
+                            className={`p-1.5 rounded-full transition-colors ${
+                              deletingLicenseId === license.id 
+                                ? 'bg-rose-500 text-white animate-pulse' 
+                                : 'bg-white/5 text-gray-400 hover:bg-rose-500/10 hover:text-rose-500'
+                            }`}
                           >
-                            Activa
+                            <Trash2 className="w-4 h-4" />
                           </button>
-                        ) : (
-                          <button 
-                            type="button"
-                            onClick={() => handleToggleStatus(license.id, license.status, license.email)} 
-                            title="Clic para Reactivar" 
-                            className="px-2.5 py-1 rounded-full bg-rose-500/10 text-rose-500 text-[10px] font-bold uppercase tracking-wider border border-rose-500/20 hover:bg-emerald-500/10 hover:text-emerald-400 hover:border-emerald-500/20 transition-all"
-                          >
-                            Revocada
-                          </button>
-                        )}
+                        </div>
                       </td>
                     </tr>
                   ))}

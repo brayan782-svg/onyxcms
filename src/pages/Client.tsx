@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth, db } from '../lib/firebase';
 import { signOut, onAuthStateChanged } from 'firebase/auth';
-import { collection, query, where, getDocs, updateDoc, doc, serverTimestamp, setDoc, getDoc, addDoc, onSnapshot, or } from 'firebase/firestore';
+import { collection, query, where, getDocs, updateDoc, doc, serverTimestamp, setDoc, getDoc, addDoc, onSnapshot, or, deleteDoc } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { 
-  Key, Shield, LogOut, CheckCircle2, Copy, Check, Edit2, Globe, XCircle, History, RefreshCw, Plus, Users
+  Key, Shield, LogOut, CheckCircle2, Copy, Check, Edit2, Globe, XCircle, History, RefreshCw, Plus, Users, Trash2
 } from 'lucide-react';
 
 interface License {
@@ -37,6 +37,7 @@ export default function Client() {
   const [loading, setLoading] = useState(true);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [editingLicenseId, setEditingLicenseId] = useState<string | null>(null);
+  const [deletingLicenseId, setDeletingLicenseId] = useState<string | null>(null);
   const [newDomain, setNewDomain] = useState('');
   const [downloadUrl, setDownloadUrl] = useState('');
   
@@ -62,16 +63,11 @@ export default function Client() {
            // Real-time licenses
            setLoading(true);
            const userEmail = user.email?.toLowerCase().trim() || '';
-           const qLicenses = query(
-             collection(db, 'licenses'), 
-             or(
-               where('email', '==', userEmail),
-               where('createdBy', '==', userEmail)
-             )
-           );
+           const qLicenses = query(collection(db, 'licenses'));
            
            unsubscribeLicenses = onSnapshot(qLicenses, (snapshot) => {
-             const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as License[];
+             const allData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as License[];
+             const data = allData.filter(l => l.email === userEmail || l.createdBy === userEmail);
              data.sort((a, b) => {
                const timeA = a.createdAt?.seconds || a.createdAt?._seconds || 0;
                const timeB = b.createdAt?.seconds || b.createdAt?._seconds || 0;
@@ -152,13 +148,18 @@ export default function Client() {
         return;
       }
 
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 10);
+
       const newLicense = {
         key: licenseKey,
         email: normalizedEmail,
         domain: 'tusitio.com',
-        type: 'standard',
+        type: 'trial',
         status: 'active',
         createdAt: serverTimestamp(),
+        expiresAt: expiresAt,
+        createdBy: normalizedEmail
       };
 
       const newDocRef = doc(collection(db, 'licenses'));
@@ -201,7 +202,7 @@ export default function Client() {
         key: licenseKey,
         email: normalizedEmail,
         domain: newClientDomain,
-        type: 'standard',
+        type: 'reseller',
         status: 'active',
         createdBy: creatorEmail,
         createdAt: serverTimestamp(),
@@ -220,8 +221,10 @@ export default function Client() {
 
       setNewClientEmail('');
       setNewClientDomain('');
-    } catch (error) {
+      alert('Licencia generada correctamente.');
+    } catch (error: any) {
       console.error('Error creating reseller license:', error);
+      alert('Error: ' + error.message);
     } finally {
       setGenerating(false);
     }
@@ -272,6 +275,38 @@ export default function Client() {
 
     } catch (error: any) {
       console.error('Error toggling status:', error);
+      alert('Error: ' + error.message);
+    }
+  };
+
+  const handleDeleteLicense = async (id: string, email: string) => {
+    try {
+      if (!auth.currentUser) return;
+      if (email === auth.currentUser.email) {
+        alert('No puedes eliminar tu propia cuenta principal de reseller.');
+        return;
+      }
+      
+      if (deletingLicenseId !== id) {
+        setDeletingLicenseId(id);
+        setTimeout(() => {
+          setDeletingLicenseId((current) => current === id ? null : current);
+        }, 3000);
+        return;
+      }
+
+      await deleteDoc(doc(db, 'licenses', id));
+      setDeletingLicenseId(null);
+      
+      await addDoc(collection(db, 'license_logs'), {
+        email: email,
+        licenseId: id,
+        action: 'license_deleted',
+        timestamp: serverTimestamp()
+      });
+
+    } catch (error: any) {
+      console.error('Error deleting license:', error);
       alert('Error: ' + error.message);
     }
   };
@@ -442,7 +477,7 @@ export default function Client() {
                       <th className="px-6 py-3 font-medium">Clave / Dominio</th>
                       <th className="px-6 py-3 font-medium">Email</th>
                       <th className="px-6 py-3 font-medium">Tipo</th>
-                      <th className="px-6 py-3 font-medium">Fecha de Creación</th>
+                      <th className="px-6 py-3 font-medium">Fechas</th>
                       <th className="px-6 py-3 font-medium">Acciones</th>
                     </tr>
                   </thead>
@@ -513,7 +548,14 @@ export default function Client() {
                           </span>
                         </td>
                         <td className="px-6 py-4 text-xs text-gray-400 whitespace-nowrap">
-                          <span>{(license.createdAt?.seconds || license.createdAt?._seconds) ? format(new Date((license.createdAt.seconds || license.createdAt._seconds) * 1000), 'MMM dd, yyyy') : '...'}</span>
+                          <div className="flex flex-col gap-1">
+                            <span>Creación: {(license.createdAt?.seconds || license.createdAt?._seconds) ? format(new Date((license.createdAt.seconds || license.createdAt._seconds) * 1000), 'MMM dd, yyyy') : '...'}</span>
+                            {license.type === 'trial' && license.expiresAt && (
+                              <span className="text-amber-400">
+                                Expira: {(license.expiresAt?.seconds || license.expiresAt?._seconds) ? format(new Date((license.expiresAt.seconds || license.expiresAt._seconds) * 1000), 'MMM dd, yyyy') : '...'}
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-6 py-4">
                           {license.status === 'active' ? (
@@ -529,14 +571,28 @@ export default function Client() {
                               >
                                 <RefreshCw className="w-3 h-3" /> Regenerar
                               </button>
-                              {license.createdBy === auth.currentUser?.email && license.type !== 'reseller' && (
-                                <button
-                                  type="button"
-                                  onClick={() => handleToggleStatus(license.id, license.status)}
-                                  className="px-2 py-1 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded hover:bg-rose-500/20 transition-colors flex items-center gap-1 text-[10px] font-bold uppercase"
-                                >
-                                  Revocar
-                                </button>
+                              {isReseller && license.createdBy === auth.currentUser?.email && license.email !== auth.currentUser?.email && (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleToggleStatus(license.id, license.status)}
+                                    className="px-2 py-1 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded hover:bg-rose-500/20 transition-colors flex items-center gap-1 text-[10px] font-bold uppercase"
+                                  >
+                                    Revocar
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteLicense(license.id, license.email)}
+                                    title={deletingLicenseId === license.id ? "Confirmar" : "Eliminar"}
+                                    className={`p-1 rounded transition-colors ${
+                                      deletingLicenseId === license.id 
+                                        ? 'bg-rose-500 text-white animate-pulse' 
+                                        : 'bg-white/5 text-gray-400 hover:bg-rose-500/10 hover:text-rose-500'
+                                    }`}
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </>
                               )}
                             </div>
                           ) : (
@@ -544,14 +600,28 @@ export default function Client() {
                               <span className="text-rose-500 text-xs font-bold uppercase flex items-center gap-1">
                                 <XCircle className="w-3 h-3" /> Revocada
                               </span>
-                              {license.createdBy === auth.currentUser?.email && license.type !== 'reseller' && (
-                                <button
-                                  type="button"
-                                  onClick={() => handleToggleStatus(license.id, license.status)}
-                                  className="px-2 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded hover:bg-emerald-500/20 transition-colors flex items-center gap-1 text-[10px] font-bold uppercase"
-                                >
-                                  Activar
-                                </button>
+                              {isReseller && license.createdBy === auth.currentUser?.email && license.email !== auth.currentUser?.email && (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleToggleStatus(license.id, license.status)}
+                                    className="px-2 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded hover:bg-emerald-500/20 transition-colors flex items-center gap-1 text-[10px] font-bold uppercase"
+                                  >
+                                    Activar
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteLicense(license.id, license.email)}
+                                    title={deletingLicenseId === license.id ? "Confirmar" : "Eliminar"}
+                                    className={`p-1 rounded transition-colors ${
+                                      deletingLicenseId === license.id 
+                                        ? 'bg-rose-500 text-white animate-pulse' 
+                                        : 'bg-white/5 text-gray-400 hover:bg-rose-500/10 hover:text-rose-500'
+                                    }`}
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </>
                               )}
                             </div>
                           )}

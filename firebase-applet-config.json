@@ -1,10 +1,10 @@
 {
   "projectId": "onyxcms-53b47",
-  "appId": "1:187493353311:web:944655099c454587e798ea",
+  "appId": "1:187493353311:web:d885cd3cb190f866e798ea",
   "apiKey": "AIzaSyBmlFRc01KUGsb0BhO1dhLtqinHjNpKoB4",
   "authDomain": "onyxcms-53b47.firebaseapp.com",
-  "firestoreDatabaseId": "(default)",
+  "firestoreDatabaseId": "ai-studio-onyxcms-30136976-526a-4fc8-ae0d-24ba0a9b7c6e",
   "storageBucket": "onyxcms-53b47.firebasestorage.app",
   "messagingSenderId": "187493353311",
-  "measurementId": "G-EE1MCNSDF2"
+  "measurementId": ""
 }
