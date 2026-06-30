@@ -2,10 +2,9 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, query, where, getDocs, addDoc } from 'firebase/firestore';
+import { getFirestore, collection, query, where, getDocs, addDoc, updateDoc, doc } from 'firebase/firestore';
 
 import fs from 'fs';
-import path from 'path';
 
 const configPath = path.resolve(process.cwd(), 'firebase-applet-config.json');
 const firebaseConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
@@ -68,10 +67,10 @@ app.all('/api/master-license/validate', async (req, res) => {
 
       const normalizeDomain = (d: any) => {
         if (typeof d !== 'string') return '';
-        return d.replace(/^https?:\/\//, '').replace(/\/$/, '').toLowerCase();
+        return d.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '').toLowerCase();
       };
 
-      const normLicense = normalizeDomain(licenseData.domain);
+      let normLicense = normalizeDomain(licenseData.domain);
       const normRequest = normalizeDomain(domain);
       
       // Permitir entornos de desarrollo y preview de AI Studio
@@ -80,6 +79,26 @@ app.all('/api/master-license/validate', async (req, res) => {
                                normRequest.endsWith('.run.app');
 
       console.log(`[Validation Domain Check] DB Domain: "${normLicense}", Request Domain: "${normRequest}", isDev: ${isDevEnvironment}`);
+
+      if (!normLicense && normRequest && !isDevEnvironment) {
+        console.log(`[Validation Domain Auto-Bind] Binding license to domain "${normRequest}"`);
+        try {
+          const docRef = snapshot.docs[0].ref;
+          await updateDoc(docRef, { domain: normRequest });
+          
+          await addDoc(collection(db, 'license_logs'), {
+            licenseId: snapshot.docs[0].id,
+            action: 'domain_updated',
+            timestamp: new Date(),
+            details: `Auto-bound to domain: ${normRequest}`,
+            userEmail: 'system@auto-bind'
+          });
+          
+          normLicense = normRequest;
+        } catch (e) {
+          console.error("Error auto-binding domain:", e);
+        }
+      }
 
       if (normLicense !== normRequest && !isDevEnvironment && normLicense !== '*') {
         console.log(`[Validation Failed] Domain mismatch`);
