@@ -5,7 +5,10 @@ import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, query, where, getDocs, addDoc } from 'firebase/firestore';
 
 import fs from 'fs';
-import firebaseConfig from './firebase-applet-config.json';
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
+const firebaseConfig = require('./firebase-applet-config.json');
 
 // Initialize Firebase Client SDK instead of Admin
 const firebaseApp = initializeApp(firebaseConfig);
