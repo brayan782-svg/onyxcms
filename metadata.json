@@ -1,0 +1,6 @@
+{
+  "name": "Onyx CMS",
+  "description": "A content management system for managing licenses and logs.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
