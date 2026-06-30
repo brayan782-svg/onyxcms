@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
+import multer from 'multer';
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, query, where, getDocs, addDoc, updateDoc, doc } from 'firebase/firestore';
 
@@ -23,14 +24,27 @@ app.use(express.urlencoded({ extended: true }));
 // --- API Routes ---
 
 // Public endpoint to validate a license
-app.options('/api/master-license/validate', cors()); // Preflight request handling
-app.all('/api/master-license/validate', async (req, res) => {
+const upload = multer();
+app.options(['/api/master-license/validate', '/api/validate', '/validate'], cors()); // Preflight request handling
+app.all(['/api/master-license/validate', '/api/validate', '/validate'], upload.none(), async (req, res) => {
     if (req.method === 'OPTIONS') {
       return res.status(200).end();
     }
     try {
-      let license_key = req.body?.license_key || req.query?.license_key || req.body?.key || req.query?.key || '';
-      let domain = req.body?.domain || req.query?.domain || '';
+      let license_key = req.body?.license_key || req.query?.license_key || req.body?.key || req.query?.key || req.body?.license || req.query?.license || req.body?.code || req.query?.code || '';
+      let domain = req.body?.domain || req.query?.domain || req.body?.url || req.query?.url || req.body?.site || req.query?.site || '';
+
+      if (!domain) {
+        const referer = req.get('Referer') || req.get('Origin') || '';
+        if (referer) {
+          try {
+            const url = new URL(referer);
+            domain = url.hostname;
+          } catch (e) {
+            domain = referer;
+          }
+        }
+      }
 
       if (typeof license_key !== 'string') license_key = String(license_key);
       if (typeof domain !== 'string') domain = String(domain);
@@ -129,7 +143,17 @@ app.all('/api/master-license/validate', async (req, res) => {
       }
 
       console.log(`[Validation Success] License valid`);
-      res.status(200).json({ valid: true, message: 'License is valid', type: licenseData.type || 'standard' });
+      res.status(200).json({ 
+        valid: true, 
+        success: true,
+        status: 'active',
+        message: 'License is valid', 
+        type: licenseData.type || 'standard',
+        domain: normRequest,
+        license_key: license_key,
+        code: 1,
+        active: true
+      });
     } catch (error: any) {
       console.error('Error validating license:', error);
       res.status(200).json({ 
