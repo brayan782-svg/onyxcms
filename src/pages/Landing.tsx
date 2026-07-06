@@ -286,323 +286,164 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Características Estrella */}
-      <section
-        id="features"
-        className="py-24 px-6 border-t border-white/5 bg-black/50"
-      >
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold tracking-tight mb-4">
-              Por qué somos diferentes
-            </h2>
-            <p className="text-gray-400 max-w-2xl mx-auto">
-              No somos una web tradicional. Somos una aplicación de vanguardia
-              diseñada para potenciar tu servidor.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-[#0a0a0a] border border-white/5 p-8 rounded-xl hover:border-amber-500/30 transition-colors shadow-xl">
-              <div className="w-12 h-12 bg-amber-500/10 rounded-lg flex items-center justify-center mb-6">
-                <ShoppingCart className="w-6 h-6 text-amber-400" />
-              </div>
-              <h3 className="text-lg font-bold mb-3 text-white">
-                Mercado P2P Inteligente
-              </h3>
-              <p className="text-sm text-gray-400 leading-relaxed">
-                El único sistema de compra/venta entre jugadores con algoritmo
-                de cuadrícula real y reconocimiento hexadecimal. Los ítems
-                respetan su tamaño (1x1, 2x3, 4x2) al ser transferidos al baúl.
-                Cero bugs, cero dupes.
-              </p>
-            </div>
-            <div className="bg-[#0a0a0a] border border-white/5 p-8 rounded-xl border-t-2 border-t-amber-500 shadow-[0_-2px_20px_rgba(245,158,11,0.15)]">
-              <div className="w-12 h-12 bg-amber-500/10 rounded-lg flex items-center justify-center mb-6">
-                <Shield className="w-6 h-6 text-amber-400" />
-              </div>
-              <h3 className="text-lg font-bold mb-3 text-white">
-                Seguridad de Vanguardia
-              </h3>
-              <p className="text-sm text-gray-400 leading-relaxed">
-                Desarrollado con Node.js, React y TypeScript. Adiós a las
-                vulnerabilidades de PHP clásico. Protección total contra
-                Inyecciones SQL, XSS y exploits comunes.
-              </p>
-            </div>
-            <div className="bg-[#0a0a0a] border border-white/5 p-8 rounded-xl hover:border-amber-500/30 transition-colors shadow-xl">
-              <div className="w-12 h-12 bg-amber-500/10 rounded-lg flex items-center justify-center mb-6">
-                <Users className="w-6 h-6 text-amber-400" />
-              </div>
-              <h3 className="text-lg font-bold mb-3 text-white">
-                Retención y Gamificación
-              </h3>
-              <p className="text-sm text-gray-400 leading-relaxed">
-                Mantén a tus usuarios activos todos los días con nuestra Ruleta
-                de la Suerte integrada, sistema de referidos, mercado de
-                personajes y recompensas por votación.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Funciones del Panel de Usuario */}
-      <section className="py-24 px-6 border-t border-white/5 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-amber-500/5 rounded-full blur-[100px] pointer-events-none"></div>
+      {/* Ecosistema Onyx CMS */}
+      <section id="features" className="py-24 px-6 border-t border-white/5 relative bg-black">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-amber-500/5 rounded-full blur-[120px] pointer-events-none"></div>
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-gray-300 text-xs font-bold uppercase tracking-widest mb-6">
-              Experiencia del Jugador
-            </div>
-            <h2 className="text-3xl font-bold tracking-tight mb-4">
-              Funciones del Panel de Usuario
-            </h2>
-            <p className="text-gray-400 max-w-2xl mx-auto">
-              Dale a tus jugadores el control que necesitan en una interfaz
-              fluida e intuitiva.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-[#0a0a0a] border border-white/5 p-6 rounded-xl flex gap-4 hover:bg-white/[0.02] transition-colors">
-              <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center shrink-0">
-                <Settings className="w-5 h-5 text-amber-400" />
-              </div>
-              <div>
-                <h4 className="text-white font-bold mb-2">
-                  Gestión de Cuenta Total
-                </h4>
-                <p className="text-sm text-gray-400 leading-relaxed">
-                  Limpiar PK, resetear estadísticas (sin quitar ítems), cambiar
-                  de clase, destrabar personaje y gestionar VIP.
-                </p>
-              </div>
-            </div>
-            <div className="bg-[#0a0a0a] border border-white/5 p-6 rounded-xl flex gap-4 hover:bg-white/[0.02] transition-colors">
-              <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center shrink-0">
-                <ShoppingCart className="w-5 h-5 text-amber-400" />
-              </div>
-              <div>
-                <h4 className="text-white font-bold mb-2">
-                  Tienda Oficial Web (Cash Shop)
-                </h4>
-                <p className="text-sm text-gray-400 leading-relaxed">
-                  Venta automatizada de ítems con opciones a medida (Luck,
-                  Skill, Excellent Options, Sockets) entregados directamente al
-                  baúl mediante algoritmos exactos.
-                </p>
-              </div>
-            </div>
-            <div className="bg-[#0a0a0a] border border-white/5 p-6 rounded-xl flex gap-4 hover:bg-white/[0.02] transition-colors">
-              <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center shrink-0">
-                <HelpCircle className="w-5 h-5 text-amber-400" />
-              </div>
-              <div>
-                <h4 className="text-white font-bold mb-2">
-                  Sistema de HelpDesk
-                </h4>
-                <p className="text-sm text-gray-400 leading-relaxed">
-                  Sistema de tickets integrado para que los usuarios contacten
-                  al Staff de manera organizada, con historial de chat y
-                  estados.
-                </p>
-              </div>
-            </div>
-            <div className="bg-[#0a0a0a] border border-white/5 p-6 rounded-xl flex gap-4 hover:bg-white/[0.02] transition-colors">
-              <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center shrink-0">
-                <Zap className="w-5 h-5 text-amber-400" />
-              </div>
-              <div>
-                <h4 className="text-white font-bold mb-2">Economía Dinámica</h4>
-                <p className="text-sm text-gray-400 leading-relaxed">
-                  Integración de Z-Coins y Joyas como moneda de cambio tanto en
-                  la tienda oficial como en el mercado entre jugadores.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Funciones del Panel de Administración */}
-      <section
-        id="admin"
-        className="py-24 px-6 border-t border-white/5 bg-black/50"
-      >
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold uppercase tracking-widest mb-6">
-              El Control del Dueño
+              El Ecosistema Completo
             </div>
-            <h2 className="text-3xl font-bold tracking-tight mb-4">
-              Funciones del Panel de Administración
+            <h2 className="text-3xl md:text-5xl font-bold tracking-tight mb-4 text-white">
+              Todo lo que tu servidor necesita
             </h2>
-            <p className="text-gray-400 max-w-2xl mx-auto">
-              Facilidad de uso sin precedentes, sin necesidad de tocar la base
-              de datos SQL manualmente.
+            <p className="text-gray-400 max-w-2xl mx-auto text-lg">
+              No somos una web tradicional. Somos una aplicación de vanguardia
+              diseñada para potenciar tu comunidad de Mu Online.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-[#050505] border border-white/5 p-6 rounded-xl">
-              <Cpu className="w-8 h-8 text-amber-500 mb-4" />
-              <h4 className="text-white font-bold mb-2">Control Absoluto</h4>
-              <p className="text-sm text-gray-400">
-                Modifica precios de funciones, gestiona la tienda, y agrega
-                premios a la ruleta con un par de clics.
-              </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* Módulo de Usuario */}
+            <div className="bg-[#050505] border border-white/5 p-8 rounded-2xl hover:border-amber-500/30 transition-colors shadow-xl group">
+              <div className="w-12 h-12 bg-amber-500/10 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <Users className="w-6 h-6 text-amber-400" />
+              </div>
+              <h3 className="text-xl font-bold mb-4 text-white">Módulo de Usuario</h3>
+              <ul className="space-y-3">
+                <li className="flex items-start gap-3 text-sm text-gray-400">
+                  <ChevronRight className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                  <span><strong>Dashboard de Personajes:</strong> Vista moderna con avatares, nivel y resets.</span>
+                </li>
+                <li className="flex items-start gap-3 text-sm text-gray-400">
+                  <ChevronRight className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                  <span><strong>Gestión de Cuenta:</strong> Sistema de resets configurable, Limpiar PK y Destrabar personaje.</span>
+                </li>
+                <li className="flex items-start gap-3 text-sm text-gray-400">
+                  <ChevronRight className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                  <span><strong>Servicios Extra:</strong> Cambio de Nombre, Cambio de Clase y Transferencia de Personajes.</span>
+                </li>
+              </ul>
             </div>
-            <div className="bg-[#050505] border border-white/5 p-6 rounded-xl">
-              <Code className="w-8 h-8 text-amber-500 mb-4" />
-              <h4 className="text-white font-bold mb-2">
-                Gestión de Contenido
-              </h4>
-              <p className="text-sm text-gray-400">
-                Publica noticias, artículos para la Wiki, agrega eventos al
-                contador en vivo y actualiza las imágenes del Slider fácilmente.
-              </p>
+
+            {/* Economía y Mercado */}
+            <div className="bg-[#050505] border border-white/5 p-8 rounded-2xl hover:border-amber-500/30 transition-colors shadow-xl group">
+              <div className="w-12 h-12 bg-amber-500/10 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <ShoppingCart className="w-6 h-6 text-amber-400" />
+              </div>
+              <h3 className="text-xl font-bold mb-4 text-white">Economía y Mercado</h3>
+              <ul className="space-y-3">
+                <li className="flex items-start gap-3 text-sm text-gray-400">
+                  <ChevronRight className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                  <span><strong>Webshop Oficial:</strong> Venta con opciones Excelentes, Luck, Skill, y Nivel configurable.</span>
+                </li>
+                <li className="flex items-start gap-3 text-sm text-gray-400">
+                  <ChevronRight className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                  <span><strong>Mercado P2P de Personajes:</strong> Compra/Venta de personajes entre usuarios usando Z-Coins.</span>
+                </li>
+                <li className="flex items-start gap-3 text-sm text-gray-400">
+                  <ChevronRight className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                  <span><strong>Finanzas:</strong> Banco para transferir monedas de forma segura e Intercambio de Z-Coins por Zen.</span>
+                </li>
+              </ul>
             </div>
-            <div className="bg-[#050505] border border-white/5 p-6 rounded-xl">
-              <Activity className="w-8 h-8 text-amber-500 mb-4" />
-              <h4 className="text-white font-bold mb-2">Monitor y Logs</h4>
-              <p className="text-sm text-gray-400">
-                Revisa todas las transacciones del mercado, compras, reseteos y
-                acciones del staff para detectar anomalías.
-              </p>
+
+            {/* Recompensas y Fidelización */}
+            <div className="bg-[#050505] border border-white/5 p-8 rounded-2xl hover:border-amber-500/30 transition-colors shadow-xl group">
+              <div className="w-12 h-12 bg-amber-500/10 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <Activity className="w-6 h-6 text-amber-400" />
+              </div>
+              <h3 className="text-xl font-bold mb-4 text-white">Recompensas y Fidelización</h3>
+              <ul className="space-y-3">
+                <li className="flex items-start gap-3 text-sm text-gray-400">
+                  <ChevronRight className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                  <span><strong>Recompensas por Resets:</strong> Entrega de ítems al baúl automáticamente al llegar a ciertas metas.</span>
+                </li>
+                <li className="flex items-start gap-3 text-sm text-gray-400">
+                  <ChevronRight className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                  <span><strong>Ruleta de la Suerte:</strong> Minijuego con premios configurables (Zen, Z-Coins, VIP).</span>
+                </li>
+                <li className="flex items-start gap-3 text-sm text-gray-400">
+                  <ChevronRight className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                  <span><strong>Crecimiento:</strong> Creador de Giftcodes con límite y Sistema de Referidos automatizado.</span>
+                </li>
+              </ul>
             </div>
-            <div className="bg-[#050505] border border-white/5 p-6 rounded-xl">
-              <LineChart className="w-8 h-8 text-amber-500 mb-4" />
-              <h4 className="text-white font-bold mb-2">Dashboard Analítico</h4>
-              <p className="text-sm text-gray-400">
-                Estadísticas en tiempo real de nuevas cuentas, usuarios en línea
-                y ganancias estimadas.
-              </p>
+
+            {/* Módulo Web y Rankings */}
+            <div className="bg-[#050505] border border-white/5 p-8 rounded-2xl hover:border-amber-500/30 transition-colors shadow-xl group">
+              <div className="w-12 h-12 bg-amber-500/10 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <LineChart className="w-6 h-6 text-amber-400" />
+              </div>
+              <h3 className="text-xl font-bold mb-4 text-white">Módulo Web y Rankings</h3>
+              <ul className="space-y-3">
+                <li className="flex items-start gap-3 text-sm text-gray-400">
+                  <ChevronRight className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                  <span><strong>Rankings Dinámicos:</strong> Top Resets, PK, Guilds, Eventos (BC, DS, CC, IT) e Invasiones.</span>
+                </li>
+                <li className="flex items-start gap-3 text-sm text-gray-400">
+                  <ChevronRight className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                  <span><strong>Comunidad:</strong> Módulo de noticias enriquecido y Perfiles públicos de personajes/guilds.</span>
+                </li>
+                <li className="flex items-start gap-3 text-sm text-gray-400">
+                  <ChevronRight className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                  <span><strong>Global:</strong> Estado del servidor en tiempo real y Soporte Multi-idioma (ES, EN, PT).</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Panel de Administración */}
+            <div className="bg-[#050505] border border-white/5 p-8 rounded-2xl hover:border-amber-500/30 transition-colors shadow-xl group">
+              <div className="w-12 h-12 bg-amber-500/10 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <Settings className="w-6 h-6 text-amber-400" />
+              </div>
+              <h3 className="text-xl font-bold mb-4 text-white">Panel de Administración</h3>
+              <ul className="space-y-3">
+                <li className="flex items-start gap-3 text-sm text-gray-400">
+                  <ChevronRight className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                  <span><strong>Dashboard Estadístico:</strong> Resumen de ingresos, cuentas y métricas generales.</span>
+                </li>
+                <li className="flex items-start gap-3 text-sm text-gray-400">
+                  <ChevronRight className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                  <span><strong>Control Absoluto:</strong> Ajuste de precios, exp, drops, y gestión de cuentas (ban/unban).</span>
+                </li>
+                <li className="flex items-start gap-3 text-sm text-gray-400">
+                  <ChevronRight className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                  <span><strong>Gestión de Contenido:</strong> Creador visual de metas de reset y administrador de la Webshop oficial.</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Seguridad y Core */}
+            <div className="bg-[#050505] border border-white/5 p-8 rounded-2xl hover:border-amber-500/30 transition-colors shadow-xl group">
+              <div className="w-12 h-12 bg-amber-500/10 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <Shield className="w-6 h-6 text-amber-400" />
+              </div>
+              <h3 className="text-xl font-bold mb-4 text-white">Seguridad y Core</h3>
+              <ul className="space-y-3">
+                <li className="flex items-start gap-3 text-sm text-gray-400">
+                  <ChevronRight className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                  <span><strong>Autenticación:</strong> JWT para sesiones seguras y Soporte MD5 / Texto plano para BD antiguas.</span>
+                </li>
+                <li className="flex items-start gap-3 text-sm text-gray-400">
+                  <ChevronRight className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                  <span><strong>Protección Multicuenta:</strong> Bloqueos por IP y HWID en regalos y referidos.</span>
+                </li>
+                <li className="flex items-start gap-3 text-sm text-gray-400">
+                  <ChevronRight className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                  <span><strong>Instalador Integrado:</strong> Asistente gráfico web para inicializar bases de datos automáticamente.</span>
+                </li>
+              </ul>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Seguridad, Rendimiento y Licenciamiento */}
-      <section
-        id="security"
-        className="py-24 px-6 border-t border-white/5 relative"
-      >
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col lg:flex-row items-center gap-16">
-            <div className="flex-1 space-y-8">
-              <div>
-                <h2 className="text-3xl font-bold tracking-tight mb-4">
-                  Arquitectura de Vanguardia
-                </h2>
-                <p className="text-gray-400 leading-relaxed">
-                  Para los administradores técnicos que buscan lo mejor. Hemos
-                  construido Onyx CMS pensando en escalabilidad, seguridad y
-                  rendimiento extremo.
-                </p>
-              </div>
 
-              <div className="space-y-6">
-                <div className="flex gap-4">
-                  <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center shrink-0">
-                    <Lock className="w-5 h-5 text-amber-400" />
-                  </div>
-                  <div>
-                    <h4 className="text-white font-bold mb-1">
-                      Sistema de Licencias Seguro
-                    </h4>
-                    <p className="text-sm text-gray-400">
-                      Cada licencia está cifrada de extremo a extremo, vinculada
-                      a tu IP/Dominio y validada en tiempo real.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex gap-4">
-                  <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center shrink-0">
-                    <Zap className="w-5 h-5 text-amber-400" />
-                  </div>
-                  <div>
-                    <h4 className="text-white font-bold mb-1">
-                      Rendimiento Full-Stack
-                    </h4>
-                    <p className="text-sm text-gray-400">
-                      Al utilizar una arquitectura SPA con React, la navegación
-                      es fluida, sin recargas. El backend en Node.js maneja
-                      miles de peticiones simultáneas con un consumo mínimo en
-                      tu VPS.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex gap-4">
-                  <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center shrink-0">
-                    <Database className="w-5 h-5 text-amber-400" />
-                  </div>
-                  <div>
-                    <h4 className="text-white font-bold mb-1">
-                      Algoritmos Nativos Hexadecimales
-                    </h4>
-                    <p className="text-sm text-gray-400">
-                      No usamos consultas SQL destructivas para el baúl. Nuestro
-                      sistema lee el código binario (VARBINARY) del baúl,
-                      calcula los espacios vacíos exactos de forma bidimensional
-                      (ancho y alto) e inserta el nuevo ítem de forma
-                      quirúrgica.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
 
-            <div className="flex-1 relative w-full">
-              <div className="absolute inset-0 bg-gradient-to-tr from-amber-500/20 to-transparent blur-3xl"></div>
-              <div className="bg-[#050505] p-6 border border-white/10 font-mono text-sm relative z-10 shadow-2xl rounded-xl">
-                <div className="flex items-center gap-2 mb-4 pb-4 border-b border-white/5">
-                  <div className="w-3 h-3 rounded-full bg-rose-500"></div>
-                  <div className="w-3 h-3 rounded-full bg-amber-500"></div>
-                  <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
-                </div>
-                <div className="space-y-2 text-gray-400">
-                  <p>
-                    <span className="text-blue-400">import</span> {"{"}{" "}
-                    <span className="text-amber-200">VaultManager</span> {"}"}{" "}
-                    <span className="text-blue-400">from</span>{" "}
-                    <span className="text-emerald-300">'@onyx/core'</span>;
-                  </p>
-                  <br />
-                  <p>
-                    <span className="text-blue-400">const</span> vault ={" "}
-                    <span className="text-blue-400">await</span> VaultManager.
-                    <span className="text-amber-200">getVault</span>(accountId);
-                  </p>
-                  <p>
-                    <span className="text-blue-400">const</span> slot = vault.
-                    <span className="text-amber-200">findEmptySpace</span>
-                    (item.width, item.height);
-                  </p>
-                  <br />
-                  <p>
-                    <span className="text-blue-400">if</span> (slot !== -1){" "}
-                    {"{"}
-                  </p>
-                  <p className="pl-4">
-                    vault.<span className="text-amber-200">insertHexItem</span>
-                    (item.hex, slot);
-                  </p>
-                  <p className="pl-4">
-                    <span className="text-blue-400">await</span> vault.
-                    <span className="text-amber-200">saveSafely</span>();
-                  </p>
-                  <p className="pl-4">
-                    <span className="text-emerald-400">
-                      // Zero dupes, zero bugs.
-                    </span>
-                  </p>
-                  <p>{"}"}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+
+
+
 
       {/* Pricing Section */}
       <section

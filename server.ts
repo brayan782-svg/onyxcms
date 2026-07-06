@@ -5,10 +5,7 @@ import multer from 'multer';
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, query, where, getDocs, addDoc, updateDoc, doc } from 'firebase/firestore';
 
-import fs from 'fs';
-
-const configPath = path.resolve(process.cwd(), 'firebase-applet-config.json');
-const firebaseConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+import firebaseConfig from './firebase-applet-config.json';
 
 // Initialize Firebase Client SDK instead of Admin
 const firebaseApp = initializeApp(firebaseConfig);
@@ -68,7 +65,15 @@ app.all(['/api/master-license/validate', '/api/validate', '/validate'], upload.n
       console.log('Snapshot received, empty:', snapshot.empty);
 
       if (snapshot.empty) {
-        console.log(`[Validation Failed] License key not found in DB`);
+        console.log(`[Validation Failed] License key "${license_key}" not found in DB.`);
+        try {
+          const allDocs = await getDocs(collection(db, 'licenses'));
+          console.log(`[DB Debug] Total licenses in DB: ${allDocs.size}`);
+          const keys = allDocs.docs.map(d => d.data().key);
+          console.log(`[DB Debug] Available keys: ${keys.join(', ')}`);
+        } catch(e) {
+          console.error('[DB Debug] Error listing licenses:', e);
+        }
         res.status(200).json({ 
           valid: false, 
           status: 'invalid',
