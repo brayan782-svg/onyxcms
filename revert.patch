@@ -1,0 +1,10 @@
+--- server.ts
++++ server.ts
+@@ -6,3 +6,4 @@
+ import { getFirestore, collection, query, where, getDocs, addDoc, updateDoc, doc } from 'firebase/firestore';
+-import firebaseConfig from './firebase-applet-config.json';
++import fs from 'fs';
+ 
++const configPath = path.resolve(process.cwd(), 'firebase-applet-config.json');
++const firebaseConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+ // Initialize Firebase Client SDK instead of Admin

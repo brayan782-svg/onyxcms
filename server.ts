@@ -4,8 +4,10 @@ import path from 'path';
 import multer from 'multer';
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, query, where, getDocs, addDoc, updateDoc, doc } from 'firebase/firestore';
+import fs from 'fs';
 
-import firebaseConfig from './firebase-applet-config.json';
+const configPath = path.resolve(process.cwd(), 'firebase-applet-config.json');
+const firebaseConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
 
 // Initialize Firebase Client SDK instead of Admin
 const firebaseApp = initializeApp(firebaseConfig);
@@ -163,8 +165,8 @@ app.all(['/api/master-license/validate', '/api/validate', '/validate'], upload.n
       console.error('Error validating license:', error);
       res.status(200).json({ 
         valid: false, 
-        status: 'invalid',
-        message: 'La clave de licencia no existe o es inválida.',
+        status: 'error',
+        message: 'Error interno del servidor al validar: ' + error.message,
         error: error.message,
         stack: error.stack
       });
