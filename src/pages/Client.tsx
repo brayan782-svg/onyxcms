@@ -1,12 +1,39 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { auth, db } from '../lib/firebase';
-import { signOut, onAuthStateChanged } from 'firebase/auth';
-import { collection, query, where, getDocs, updateDoc, doc, serverTimestamp, setDoc, getDoc, addDoc, onSnapshot, or, deleteDoc } from 'firebase/firestore';
-import { format } from 'date-fns';
-import { 
-  Key, Shield, LogOut, CheckCircle2, Copy, Check, Edit2, Globe, XCircle, History, RefreshCw, Plus, Users, Trash2
-} from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { auth, db } from "../lib/firebase";
+import { signOut, onAuthStateChanged } from "firebase/auth";
+import {
+  collection,
+  query,
+  where,
+  updateDoc,
+  doc,
+  serverTimestamp,
+  setDoc,
+  getDoc,
+  addDoc,
+  onSnapshot,
+  deleteDoc,
+} from "firebase/firestore";
+import { format } from "date-fns";
+import {
+  Shield,
+  LogOut,
+  Copy,
+  Check,
+  Edit2,
+  Globe,
+  XCircle,
+  History,
+  RefreshCw,
+  Plus,
+  Trash2,
+  Download,
+  AlertCircle,
+  CheckCircle2,
+  MessageCircle,
+  ArrowRight,
+} from "lucide-react";
 
 interface License {
   id: string;
@@ -38,15 +65,27 @@ export default function Client() {
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [editingLicenseId, setEditingLicenseId] = useState<string | null>(null);
   const [deletingLicenseId, setDeletingLicenseId] = useState<string | null>(null);
-  const [newDomain, setNewDomain] = useState('');
-  const [downloadUrl, setDownloadUrl] = useState('');
-  
+  const [regeneratingLicenseId, setRegeneratingLicenseId] = useState<string | null>(null);
+  const [newDomain, setNewDomain] = useState("");
+  const [downloadUrl, setDownloadUrl] = useState("");
+  const [whatsappNumber, setWhatsappNumber] = useState("584242770219");
+  const [feedback, setFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
   // Reseller states
   const [generating, setGenerating] = useState(false);
-  const [newClientEmail, setNewClientEmail] = useState('');
-  const [newClientDomain, setNewClientDomain] = useState('');
-  
+  const [newClientEmail, setNewClientEmail] = useState("");
+  const [newClientDomain, setNewClientDomain] = useState("");
+
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const justRegistered = searchParams.get("registered") === "1";
+
+  const showFeedback = (type: "success" | "error", text: string) => {
+    setFeedback({ type, text });
+    setTimeout(() => {
+      setFeedback((curr) => (curr?.text === text ? null : curr));
+    }, 4500);
+  };
 
   useEffect(() => {
     let unsubscribeAuth: () => void;
@@ -55,48 +94,65 @@ export default function Client() {
 
     unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       if (user) {
-        if (user.email === 'brayan782@gmail.com') {
-           navigate('/admin');
+        if (user.email === "brayan782@gmail.com") {
+          navigate("/admin");
         } else {
-           fetchSettings();
-           
-           // Real-time licenses
-           setLoading(true);
-           const userEmail = user.email?.toLowerCase().trim() || '';
-           const qLicenses = query(collection(db, 'licenses'));
-           
-           unsubscribeLicenses = onSnapshot(qLicenses, (snapshot) => {
-             const allData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as License[];
-             const data = allData.filter(l => l.email === userEmail || l.createdBy === userEmail);
-             data.sort((a, b) => {
-               const timeA = a.createdAt?.seconds || a.createdAt?._seconds || 0;
-               const timeB = b.createdAt?.seconds || b.createdAt?._seconds || 0;
-               return timeB - timeA;
-             });
-             setLicenses(data);
-             setLoading(false);
-           }, (error) => {
-             console.error('Error fetching licenses in realtime:', error);
-             alert('Error fetching licenses: ' + error.message);
-             setLoading(false);
-           });
+          fetchSettings();
 
-           // Real-time logs
-           const logsQuery = query(collection(db, 'license_logs'), where('email', '==', userEmail));
-           unsubscribeLogs = onSnapshot(logsQuery, (snapshot) => {
-             const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as LicenseLog[];
-             data.sort((a, b) => {
-               const timeA = a.timestamp?.seconds || a.timestamp?._seconds || 0;
-               const timeB = b.timestamp?.seconds || b.timestamp?._seconds || 0;
-               return timeB - timeA;
-             });
-             setLogs(data);
-           }, (error) => {
-             console.error('Error fetching logs in realtime:', error);
-           });
+          setLoading(true);
+          const userEmail = user.email?.toLowerCase().trim() || "";
+          const qLicenses = query(collection(db, "licenses"));
+
+          unsubscribeLicenses = onSnapshot(
+            qLicenses,
+            (snapshot) => {
+              const allData = snapshot.docs.map((d) => ({
+                id: d.id,
+                ...d.data(),
+              })) as License[];
+              const data = allData.filter(
+                (l) => l.email === userEmail || l.createdBy === userEmail
+              );
+              data.sort((a, b) => {
+                const timeA = a.createdAt?.seconds || a.createdAt?._seconds || 0;
+                const timeB = b.createdAt?.seconds || b.createdAt?._seconds || 0;
+                return timeB - timeA;
+              });
+              setLicenses(data);
+              setLoading(false);
+            },
+            (error) => {
+              console.error("Error fetching licenses in realtime:", error);
+              showFeedback("error", "Error cargando licencias: " + error.message);
+              setLoading(false);
+            }
+          );
+
+          const logsQuery = query(
+            collection(db, "license_logs"),
+            where("email", "==", userEmail)
+          );
+          unsubscribeLogs = onSnapshot(
+            logsQuery,
+            (snapshot) => {
+              const data = snapshot.docs.map((d) => ({
+                id: d.id,
+                ...d.data(),
+              })) as LicenseLog[];
+              data.sort((a, b) => {
+                const timeA = a.timestamp?.seconds || a.timestamp?._seconds || 0;
+                const timeB = b.timestamp?.seconds || b.timestamp?._seconds || 0;
+                return timeB - timeA;
+              });
+              setLogs(data);
+            },
+            (error) => {
+              console.error("Error fetching logs in realtime:", error);
+            }
+          );
         }
       } else {
-        navigate('/login');
+        navigate("/login");
       }
     });
 
@@ -109,16 +165,19 @@ export default function Client() {
 
   const fetchSettings = async () => {
     try {
-      const docRef = doc(db, 'settings', 'cms');
+      const docRef = doc(db, "settings", "cms");
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
-        setDownloadUrl(docSnap.data().downloadUrl || '');
+        setDownloadUrl(docSnap.data().downloadUrl || "");
+        if (docSnap.data().whatsappNumber) {
+          setWhatsappNumber(docSnap.data().whatsappNumber);
+        }
       }
     } catch (e: any) {
-      if (e.message && e.message.includes('offline')) {
-        console.warn('Network offline, could not fetch settings.');
+      if (e.message && e.message.includes("offline")) {
+        console.warn("Network offline, could not fetch settings.");
       } else {
-        console.error('Error fetching settings:', e);
+        console.error("Error fetching settings:", e);
       }
     }
   };
@@ -128,63 +187,34 @@ export default function Client() {
     for (let i = 0; i < 3; i++) {
       parts.push(Math.random().toString(16).substring(2, 6).toUpperCase());
     }
-    return `ONYX-${parts.join('-')}`;
+    return `ONYX-${parts.join("-")}`;
   };
 
-  const isReseller = licenses.some(l => l.type === 'reseller' && l.email === auth.currentUser?.email);
+  const isReseller = licenses.some(
+    (l) => l.type === "reseller" && l.email === auth.currentUser?.email
+  );
   const maxResellerClients = licenses
-    .filter(l => l.type === 'reseller' && l.email === auth.currentUser?.email)
+    .filter((l) => l.type === "reseller" && l.email === auth.currentUser?.email)
     .reduce((sum, l) => sum + (l.maxClients || 5), 0);
-  const usedClients = licenses.filter(l => l.createdBy === auth.currentUser?.email).length;
+  const usedClients = licenses.filter(
+    (l) => l.createdBy === auth.currentUser?.email
+  ).length;
 
-  const handleCreateLicense = async () => {
-    try {
-      if (!auth.currentUser?.email) return;
-      const licenseKey = generateLicenseKey();
-      const normalizedEmail = auth.currentUser.email.toLowerCase();
-
-      if (licenses.some(l => l.email === normalizedEmail)) {
-        alert('Ya tienes una licencia registrada para esta cuenta.');
-        return;
-      }
-
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 10);
-
-      const newLicense = {
-        key: licenseKey,
-        email: normalizedEmail,
-        domain: 'tusitio.com',
-        type: 'trial',
-        status: 'active',
-        createdAt: serverTimestamp(),
-        expiresAt: expiresAt,
-        createdBy: normalizedEmail
-      };
-
-      const newDocRef = doc(collection(db, 'licenses'));
-      await setDoc(newDocRef, newLicense);
-      
-      await addDoc(collection(db, 'license_logs'), {
-        email: normalizedEmail,
-        licenseId: newDocRef.id,
-        action: 'created',
-        newDomain: 'tusitio.com',
-        timestamp: serverTimestamp()
-      });
-
-    } catch (error: any) {
-      console.error('Error creating license:', error);
-      alert('Error creating license: ' + error.message);
-    }
-  };
+  const cleanWhatsapp = whatsappNumber.replace(/[^\d]/g, "") || "584242770219";
+  const currentUserEmail = auth.currentUser?.email || "";
+  const proWhatsappUrl = `https://wa.me/${cleanWhatsapp}?text=${encodeURIComponent(
+    `Hola, me acabo de registrar en Onyx CMS v4.1.2 con el correo ${currentUserEmail} y quiero adquirir y activar la Licencia PRO Vitalicia ($200).`
+  )}`;
+  const resellerWhatsappUrl = `https://wa.me/${cleanWhatsapp}?text=${encodeURIComponent(
+    `Hola, me registré en Onyx CMS v4.1.2 con el correo ${currentUserEmail} y estoy interesado en activar el Plan Reseller.`
+  )}`;
 
   const handleGenerateResellerLicense = async (e: React.FormEvent) => {
     e.preventDefault();
     if (usedClients >= maxResellerClients) {
-        return;
+      return;
     }
-    
+
     setGenerating(true);
     try {
       if (!auth.currentUser?.email) return;
@@ -192,8 +222,11 @@ export default function Client() {
       const normalizedEmail = newClientEmail.toLowerCase().trim();
       const creatorEmail = auth.currentUser.email.toLowerCase();
 
-      if (licenses.some(l => l.email === normalizedEmail)) {
-        alert('Este correo electrónico ya tiene una licencia registrada.');
+      if (normalizedEmail && licenses.some((l) => l.email === normalizedEmail)) {
+        showFeedback(
+          "error",
+          "Este correo electrónico ya tiene una licencia registrada."
+        );
         setGenerating(false);
         return;
       }
@@ -201,81 +234,86 @@ export default function Client() {
       const newLicense = {
         key: licenseKey,
         email: normalizedEmail,
-        domain: newClientDomain,
-        type: 'reseller',
-        status: 'active',
+        domain: newClientDomain.trim(),
+        type: "reseller",
+        status: "active",
         createdBy: creatorEmail,
         createdAt: serverTimestamp(),
       };
 
-      const newDocRef = doc(collection(db, 'licenses'));
+      const newDocRef = doc(collection(db, "licenses"));
       await setDoc(newDocRef, newLicense);
-      
-      await addDoc(collection(db, 'license_logs'), {
+
+      await addDoc(collection(db, "license_logs"), {
         email: creatorEmail,
         licenseId: newDocRef.id,
-        action: 'created_by_reseller',
-        newDomain: newClientDomain,
-        timestamp: serverTimestamp()
+        action: "created_by_reseller",
+        newDomain: newClientDomain.trim(),
+        timestamp: serverTimestamp(),
       });
 
-      setNewClientEmail('');
-      setNewClientDomain('');
-      alert('Licencia generada correctamente.');
+      setNewClientEmail("");
+      setNewClientDomain("");
+      showFeedback("success", "Licencia para cliente generada correctamente.");
     } catch (error: any) {
-      console.error('Error creating reseller license:', error);
-      alert('Error: ' + error.message);
+      console.error("Error creating reseller license:", error);
+      showFeedback("error", "Error: " + error.message);
     } finally {
       setGenerating(false);
     }
   };
 
   const handleUpdateDomain = async (id: string) => {
-    if (!newDomain) return;
+    if (!newDomain.trim()) return;
     try {
-      const currentLicense = licenses.find(l => l.id === id);
-      const oldDomain = currentLicense?.domain || '';
+      const currentLicense = licenses.find((l) => l.id === id);
+      const oldDomain = currentLicense?.domain || "";
+      const cleanDomain = newDomain.trim();
 
-      await updateDoc(doc(db, 'licenses', id), {
-        domain: newDomain,
-        updatedAt: serverTimestamp()
+      await updateDoc(doc(db, "licenses", id), {
+        domain: cleanDomain,
+        updatedAt: serverTimestamp(),
       });
 
-      await addDoc(collection(db, 'license_logs'), {
+      await addDoc(collection(db, "license_logs"), {
         email: auth.currentUser?.email,
         licenseId: id,
-        action: 'domain_updated',
+        action: "domain_updated",
         oldDomain: oldDomain,
-        newDomain: newDomain,
-        timestamp: serverTimestamp()
+        newDomain: cleanDomain,
+        timestamp: serverTimestamp(),
       });
 
       setEditingLicenseId(null);
-      setNewDomain('');
+      setNewDomain("");
+      showFeedback("success", `Dominio actualizado a ${cleanDomain}.`);
     } catch (error: any) {
-      console.error('Error updating domain:', error);
-      alert('Error updating domain: ' + error.message);
+      console.error("Error updating domain:", error);
+      showFeedback("error", "Error actualizando dominio: " + error.message);
     }
   };
 
   const handleToggleStatus = async (id: string, currentStatus: string) => {
     try {
-      const newStatus = currentStatus === 'active' ? 'revoked' : 'active';
-      await updateDoc(doc(db, 'licenses', id), {
+      const newStatus = currentStatus === "active" ? "revoked" : "active";
+      await updateDoc(doc(db, "licenses", id), {
         status: newStatus,
-        updatedAt: serverTimestamp()
-      });
-      
-      await addDoc(collection(db, 'license_logs'), {
-        email: auth.currentUser?.email,
-        licenseId: id,
-        action: 'status_updated',
-        timestamp: serverTimestamp()
+        updatedAt: serverTimestamp(),
       });
 
+      await addDoc(collection(db, "license_logs"), {
+        email: auth.currentUser?.email,
+        licenseId: id,
+        action: "status_updated",
+        timestamp: serverTimestamp(),
+      });
+      showFeedback(
+        "success",
+        newStatus === "active" ? "Licencia activada." : "Licencia revocada."
+      );
     } catch (error: any) {
-      console.error('Error toggling status:', error);
-      alert('Error: ' + error.message);
+      console.error("Error toggling status:", error);
+      showFeedback("error", "Error: " + error.message);
     }
   };
 
@@ -283,59 +321,75 @@ export default function Client() {
     try {
       if (!auth.currentUser) return;
       if (email === auth.currentUser.email) {
-        alert('No puedes eliminar tu propia cuenta principal de reseller.');
+        showFeedback(
+          "error",
+          "No puedes eliminar tu propia cuenta principal de reseller."
+        );
         return;
       }
-      
+
       if (deletingLicenseId !== id) {
         setDeletingLicenseId(id);
         setTimeout(() => {
-          setDeletingLicenseId((current) => current === id ? null : current);
-        }, 3000);
+          setDeletingLicenseId((current) => (current === id ? null : current));
+        }, 3500);
         return;
       }
 
-      await deleteDoc(doc(db, 'licenses', id));
+      await deleteDoc(doc(db, "licenses", id));
       setDeletingLicenseId(null);
-      
-      await addDoc(collection(db, 'license_logs'), {
+
+      await addDoc(collection(db, "license_logs"), {
         email: email,
         licenseId: id,
-        action: 'license_deleted',
-        timestamp: serverTimestamp()
+        action: "license_deleted",
+        timestamp: serverTimestamp(),
       });
-
+      showFeedback("success", "Licencia eliminada correctamente.");
     } catch (error: any) {
-      console.error('Error deleting license:', error);
-      alert('Error: ' + error.message);
+      console.error("Error deleting license:", error);
+      showFeedback("error", "Error: " + error.message);
     }
   };
 
   const handleRegenerateKey = async (id: string) => {
+    if (regeneratingLicenseId !== id) {
+      setRegeneratingLicenseId(id);
+      setTimeout(() => {
+        setRegeneratingLicenseId((curr) => (curr === id ? null : curr));
+      }, 4000);
+      return;
+    }
+
     try {
       if (!auth.currentUser?.email) return;
       const newKey = generateLicenseKey();
-      
-      await updateDoc(doc(db, 'licenses', id), {
+
+      await updateDoc(doc(db, "licenses", id), {
         key: newKey,
-        updatedAt: serverTimestamp()
+        updatedAt: serverTimestamp(),
       });
 
-      await addDoc(collection(db, 'license_logs'), {
+      await addDoc(collection(db, "license_logs"), {
         email: auth.currentUser?.email,
         licenseId: id,
-        action: 'key_regenerated',
-        timestamp: serverTimestamp()
+        action: "key_regenerated",
+        timestamp: serverTimestamp(),
       });
-
-    } catch (error) {
-      console.error('Error regenerating key:', error);
+      setRegeneratingLicenseId(null);
+      showFeedback(
+        "success",
+        "Clave regenerada. Recuerda actualizarla en tu Panel Admin de Onyx CMS."
+      );
+    } catch (error: any) {
+      console.error("Error regenerating key:", error);
+      showFeedback("error", "Error al regenerar clave.");
     }
   };
 
   const handleSignOut = async () => {
     await signOut(auth);
-    navigate('/login');
+    navigate("/login");
   };
 
   const copyToClipboard = (text: string) => {
@@ -344,287 +398,480 @@ export default function Client() {
     setTimeout(() => setCopiedKey(null), 2000);
   };
 
-  const activeLicenses = licenses.filter(l => l.status === 'active').length;
-  
+  const activeLicenses = licenses.filter((l) => l.status === "active").length;
+
   return (
-    <div className="flex flex-col h-screen w-full bg-[#050505] p-6 gap-6">
-      <header className="flex items-center justify-between pb-4 border-b border-white/5 shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center shadow-[0_0_20px_rgba(0,209,255,0.3)]">
-            <Shield className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold tracking-tight text-white">Panel de Cliente <span className="font-light text-gray-400">ONYX</span></h1>
-            <p className="text-xs text-gray-500 uppercase tracking-widest">{isReseller ? 'Portal Reseller' : 'Gestión de Licencias'}</p>
-          </div>
-        </div>
-        <div className="flex gap-4 items-center">
-          <button 
-            onClick={handleSignOut}
-            title="Cerrar sesión"
-            className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white hover:bg-white/10 transition-colors"
+    <div className="min-h-screen w-full bg-[#070709] text-zinc-100 flex flex-col">
+      <header className="border-b border-white/[0.08] bg-[#0a0a0e]">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-6">
+          <Link
+            to="/"
+            className="flex items-center gap-2.5 font-display text-lg font-bold tracking-tight text-white whitespace-nowrap shrink-0"
           >
-            <span className="text-xs font-bold">{auth.currentUser?.email?.substring(0, 2).toUpperCase() || 'US'}</span>
+            <span className="w-7 h-7 rounded-md bg-amber-500 text-zinc-950 inline-flex items-center justify-center">
+              <Shield className="w-4 h-4 stroke-[2.25]" />
+            </span>
+            <span>Onyx CMS</span>
+          </Link>
+
+          <div className="hidden sm:flex items-center gap-2 text-xs text-zinc-400">
+            <span>{isReseller ? "Portal Reseller" : "Área de Cliente"}</span>
+            <span aria-hidden="true">·</span>
+            <span>v4.1.2</span>
+            <span aria-hidden="true">·</span>
+            <span className="text-zinc-300">{auth.currentUser?.email}</span>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white/[0.04] border border-white/10 text-xs font-medium text-zinc-300 hover:text-white hover:bg-white/[0.08] transition-colors whitespace-nowrap shrink-0"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            Cerrar sesión
           </button>
         </div>
       </header>
 
-      <main className="flex-1 grid grid-cols-1 md:grid-cols-12 gap-6 min-h-0">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-6 py-8 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {feedback && (
+          <div className="lg:col-span-12">
+            <div
+              className={`rounded-lg border px-4 py-3 text-sm flex items-center gap-3 ${
+                feedback.type === "success"
+                  ? "bg-emerald-500/10 border-emerald-500/25 text-emerald-300"
+                  : "bg-rose-500/10 border-rose-500/25 text-rose-300"
+              }`}
+            >
+              {feedback.type === "success" ? (
+                <CheckCircle2 className="w-4 h-4 shrink-0" />
+              ) : (
+                <AlertCircle className="w-4 h-4 shrink-0" />
+              )}
+              <span>{feedback.text}</span>
+            </div>
+          </div>
+        )}
+
         {/* Left Sidebar */}
-        <section className="md:col-span-3 flex flex-col gap-4 overflow-y-auto">
-          {/* Stats Card */}
-          <div className="onyx-card p-4 shrink-0">
-            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Mis Licencias</h3>
-            <div className="space-y-6">
-              <div className="flex flex-col">
-                <span className="text-3xl font-light text-white">{licenses.length}</span>
-                <span className="text-xs text-gray-500">Licencias Totales</span>
+        <aside className="lg:col-span-3 flex flex-col gap-5">
+          <div className="onyx-card p-6">
+            <h2 className="text-xs font-semibold text-zinc-400 mb-5">
+              Resumen de licencias
+            </h2>
+            <div className="space-y-5">
+              <div>
+                <div className="font-mono text-3xl font-semibold text-white tabular-nums">
+                  {licenses.length}
+                </div>
+                <div className="text-xs text-zinc-400 mt-0.5">Licencias registradas</div>
               </div>
-              <div className="flex flex-col">
-                <span className="text-3xl font-light text-cyan-400">{activeLicenses}</span>
-                <span className="text-xs text-gray-500">Despliegues Activos</span>
+              <div className="pt-4 border-t border-white/[0.06]">
+                <div className="font-mono text-3xl font-semibold text-amber-400 tabular-nums">
+                  {activeLicenses}
+                </div>
+                <div className="text-xs text-zinc-400 mt-0.5">Despliegues activos</div>
               </div>
-              
+
               {isReseller && (
-                <div className="flex flex-col pt-4 border-t border-white/5">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Cupos Reseller</span>
-                    <span className="text-xs font-mono text-purple-400">{usedClients} / {maxResellerClients}</span>
+                <div className="pt-4 border-t border-white/[0.06]">
+                  <div className="flex items-center justify-between mb-2 text-xs">
+                    <span className="text-zinc-400">Cupos Reseller</span>
+                    <span className="font-mono text-amber-400 tabular-nums">
+                      {usedClients} / {maxResellerClients}
+                    </span>
                   </div>
-                  <div className="w-full bg-white/5 rounded-full h-1.5">
-                    <div 
-                      className="bg-purple-500 h-1.5 rounded-full" 
-                      style={{ width: `${Math.min(100, (usedClients / maxResellerClients) * 100)}%` }}
-                    ></div>
+                  <div className="w-full bg-white/[0.06] rounded-full h-1.5 overflow-hidden">
+                    <div
+                      className="bg-amber-500 h-1.5 rounded-full transition-all"
+                      style={{
+                        width: `${Math.min(100, (usedClients / Math.max(1, maxResellerClients)) * 100)}%`,
+                      }}
+                    />
                   </div>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Download CMS */}
           {downloadUrl && (
-            <div className="onyx-card p-4 shrink-0 border-l-2 border-l-emerald-500 bg-emerald-500/5">
-              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Archivos del Sistema</h3>
-              <p className="text-xs text-gray-500 mb-4">Descarga la última versión de ONYX CMS.</p>
-              <a 
-                href={downloadUrl} 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="w-full px-4 py-2 bg-emerald-500/10 text-emerald-400 rounded-lg text-xs font-bold uppercase tracking-widest border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors block text-center"
+            <div className="onyx-card p-6">
+              <h2 className="text-sm font-semibold text-white mb-1.5">
+                Onyx CMS v4.1.2
+              </h2>
+              <p className="text-xs text-zinc-400 leading-relaxed mb-4">
+                Descarga el paquete oficial empaquetado listo para Node.js 18–24+.
+              </p>
+              <a
+                href={downloadUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full onyx-btn px-4 py-2.5 rounded-lg text-xs font-semibold inline-flex items-center justify-center gap-2 whitespace-nowrap"
               >
-                Descargar .ZIP
+                <Download className="w-4 h-4" />
+                Descargar paquete (.ZIP)
               </a>
             </div>
           )}
 
-          {/* Reseller Generator */}
           {isReseller && usedClients < maxResellerClients && (
-            <div className="onyx-card p-4 shrink-0">
-              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-                <Plus className="w-4 h-4 text-purple-400" />
-                Vender Licencia
-              </h3>
-              <form onSubmit={handleGenerateResellerLicense} className="flex flex-col gap-3">
-                <div className="flex flex-col gap-1">
-                  <label className="text-[10px] uppercase tracking-wider text-gray-500">Dominio</label>
-                  <input 
-                    type="text" 
+            <div className="onyx-card p-6">
+              <h2 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                <Plus className="w-4 h-4 text-amber-400" />
+                Emitir licencia de cliente
+              </h2>
+              <form
+                onSubmit={handleGenerateResellerLicense}
+                className="flex flex-col gap-3"
+              >
+                <div>
+                  <label className="text-xs text-zinc-400 block mb-1">
+                    Dominio o IP
+                  </label>
+                  <input
+                    type="text"
                     required
+                    placeholder="miserver.com"
                     value={newClientDomain}
                     onChange={(e) => setNewClientDomain(e.target.value)}
-                    className="bg-white/5 border border-white/10 rounded px-3 py-2 text-xs text-white focus:outline-none focus:border-purple-500 transition-colors"
+                    className="w-full bg-[#070709] border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500 transition-colors"
                   />
                 </div>
-                <button 
+                <div>
+                  <label className="text-xs text-zinc-400 block mb-1">
+                    Correo del cliente (opcional)
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="cliente@correo.com"
+                    value={newClientEmail}
+                    onChange={(e) => setNewClientEmail(e.target.value)}
+                    className="w-full bg-[#070709] border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500 transition-colors"
+                  />
+                </div>
+                <button
                   type="submit"
                   disabled={generating}
-                  className="mt-2 onyx-btn w-full px-3 py-2 rounded text-xs font-bold uppercase tracking-widest text-white shadow-[0_0_15px_rgba(168,85,247,0.15)] disabled:opacity-50 !bg-gradient-to-r !from-purple-600 !to-fuchsia-600 hover:!from-purple-500 hover:!to-fuchsia-500"
+                  className="mt-1 onyx-btn w-full px-3 py-2.5 rounded-lg text-xs font-semibold disabled:opacity-50"
                 >
-                  {generating ? 'Generando...' : 'Crear Licencia'}
+                  {generating ? "Generando..." : "Crear licencia PRO"}
                 </button>
               </form>
             </div>
           )}
-        </section>
+        </aside>
 
-        {/* Main Content Area */}
-        <section className="md:col-span-9 flex flex-col gap-4 min-h-0 overflow-y-auto">
+        {/* Main Content */}
+        <section className="lg:col-span-9 flex flex-col gap-6 min-w-0">
           {loading ? (
-            <div className="flex items-center justify-center h-64">
-              <p className="text-gray-500">Cargando...</p>
+            <div className="onyx-card p-12 text-center text-sm text-zinc-400">
+              Cargando licencias...
             </div>
           ) : licenses.length === 0 ? (
-            <div className="onyx-card p-12 flex flex-col items-center justify-center text-center h-full">
-              <Shield className="w-16 h-16 text-white/20 mb-4" />
-              <h2 className="text-xl font-bold text-white mb-2">No tienes licencias activas</h2>
-              <p className="text-sm text-gray-400 mb-6 max-w-md">
-                Comienza ahora generando tu licencia para tu proyecto.
+            <div className="onyx-card p-10 sm:p-12 flex flex-col items-center justify-center text-center">
+              <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-center mb-5">
+                <MessageCircle className="w-6 h-6 text-amber-400" />
+              </div>
+
+              {justRegistered && (
+                <p className="text-xs font-semibold text-emerald-400 mb-2">
+                  Cuenta registrada correctamente
+                </p>
+              )}
+
+              <h2 className="font-display text-2xl font-bold text-white mb-3">
+                Tu cuenta aún no tiene un plan PRO activo
+              </h2>
+              <p className="text-sm text-zinc-400 mb-8 max-w-lg leading-relaxed">
+                Las licencias <strong className="text-zinc-200">PRO Vitalicia ($200)</strong> y{" "}
+                <strong className="text-zinc-200">Reseller</strong> son activadas
+                manualmente por el administrador tras confirmar tu solicitud. Contáctanos
+                por WhatsApp con tu correo registrado (
+                <span className="font-mono text-zinc-200">{currentUserEmail}</span>) para
+                activar tu licencia.
               </p>
-              <button onClick={handleCreateLicense} className="onyx-btn px-6 py-3 rounded-lg text-sm font-bold uppercase tracking-widest text-white shadow-lg shadow-cyan-900/20">
-                Generar Mi Licencia
-              </button>
+
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full max-w-md">
+                <a
+                  href={proWhatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full sm:w-auto flex-1 onyx-btn px-5 py-3 rounded-lg text-sm font-semibold inline-flex items-center justify-center gap-2 whitespace-nowrap"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  Adquirir PRO ($200)
+                  <ArrowRight className="w-4 h-4" />
+                </a>
+                <a
+                  href={resellerWhatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full sm:w-auto px-5 py-3 rounded-lg text-sm font-semibold text-zinc-100 bg-white/[0.05] border border-white/12 hover:bg-white/[0.1] transition-colors inline-flex items-center justify-center whitespace-nowrap"
+                >
+                  Consultar Reseller
+                </a>
+              </div>
             </div>
           ) : (
-            <div className="onyx-card flex-1 flex flex-col overflow-hidden">
-              <div className="p-4 border-b border-white/5 flex items-center justify-between shrink-0">
-                <h2 className="text-sm font-bold text-white uppercase tracking-wider">Tus Licencias Activas</h2>
+            <div className="onyx-card overflow-hidden">
+              <div className="px-6 py-4 border-b border-white/[0.08] flex items-center justify-between">
+                <h2 className="font-display text-base font-bold text-white">
+                  Tus licencias registradas
+                </h2>
+                <span className="text-xs text-zinc-500 font-mono tabular-nums">
+                  {licenses.length} en total
+                </span>
               </div>
-              <div className="flex-1 overflow-auto">
-                <table className="w-full text-left text-sm text-gray-400">
-                  <thead className="text-xs uppercase bg-black/40 text-gray-500 sticky top-0 z-10">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm text-zinc-400 min-w-[680px]">
+                  <thead className="text-xs bg-[#111118] text-zinc-400 border-b border-white/[0.08]">
                     <tr>
-                      <th className="px-6 py-3 font-medium">Clave / Dominio</th>
-                      <th className="px-6 py-3 font-medium">Email</th>
-                      <th className="px-6 py-3 font-medium">Tipo</th>
-                      <th className="px-6 py-3 font-medium">Fechas</th>
-                      <th className="px-6 py-3 font-medium">Acciones</th>
+                      <th className="px-6 py-3.5 font-medium">Clave y dominio</th>
+                      <th className="px-6 py-3.5 font-medium">Titular</th>
+                      <th className="px-6 py-3.5 font-medium">Edición</th>
+                      <th className="px-6 py-3.5 font-medium">Fechas</th>
+                      <th className="px-6 py-3.5 font-medium text-right">Acciones</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-white/5">
-                    {licenses.map(license => (
-                      <tr key={license.id} className="hover:bg-white/5 transition-colors group">
+                  <tbody className="divide-y divide-white/[0.06]">
+                    {licenses.map((license) => (
+                      <tr
+                        key={license.id}
+                        className="hover:bg-white/[0.02] transition-colors group"
+                      >
                         <td className="px-6 py-4">
-                          <div className="flex flex-col gap-1">
+                          <div className="flex flex-col gap-1.5">
                             <div className="flex items-center gap-2">
-                              <span className="font-mono text-cyan-400 font-medium">{license.key}</span>
-                              <button 
-                                onClick={() => copyToClipboard(license.key)} 
-                                className="text-gray-500 hover:text-white transition-colors"
+                              <span className="font-mono text-amber-400 font-medium">
+                                {license.key}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => copyToClipboard(license.key)}
+                                title="Copiar clave"
+                                className="text-zinc-500 hover:text-white transition-colors"
                               >
-                                {copiedKey === license.key ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                                {copiedKey === license.key ? (
+                                  <Check className="w-3.5 h-3.5 text-emerald-400" />
+                                ) : (
+                                  <Copy className="w-3.5 h-3.5" />
+                                )}
                               </button>
                             </div>
-                            
+
                             {editingLicenseId === license.id ? (
                               <div className="flex items-center gap-2 mt-1">
-                                <input 
-                                  type="text" 
+                                <input
+                                  type="text"
                                   value={newDomain}
                                   onChange={(e) => setNewDomain(e.target.value)}
-                                  className="bg-black/40 border border-cyan-500/50 rounded px-2 py-1 text-xs text-white focus:outline-none"
+                                  className="bg-[#070709] border border-amber-500/60 rounded px-2.5 py-1 text-xs text-white focus:outline-none"
                                 />
-                                <button type="button" onClick={() => handleUpdateDomain(license.id)} className="text-cyan-400">
+                                <button
+                                  type="button"
+                                  onClick={() => handleUpdateDomain(license.id)}
+                                  aria-label="Guardar dominio"
+                                  className="text-emerald-400 hover:text-emerald-300"
+                                >
                                   <Check className="w-4 h-4" />
                                 </button>
-                                <button type="button" onClick={() => setEditingLicenseId(null)} className="text-gray-500">
+                                <button
+                                  type="button"
+                                  onClick={() => setEditingLicenseId(null)}
+                                  aria-label="Cancelar edición"
+                                  className="text-zinc-500 hover:text-zinc-300"
+                                >
                                   <XCircle className="w-4 h-4" />
                                 </button>
                               </div>
                             ) : (
-                              <div className="flex items-center gap-2 mt-1">
-                                <span className="text-xs text-gray-500 flex items-center gap-1">
-                                  <Globe className="w-3 h-3" /> {license.domain}
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-zinc-400 inline-flex items-center gap-1.5">
+                                  <Globe className="w-3.5 h-3.5 text-zinc-500" />
+                                  {license.domain}
                                 </span>
-                                {license.status === 'active' && (
-                                  <button 
+                                {license.status === "active" && (
+                                  <button
                                     type="button"
                                     onClick={() => {
                                       setEditingLicenseId(license.id);
                                       setNewDomain(license.domain);
                                     }}
-                                    className="text-gray-600 hover:text-cyan-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    title="Cambiar dominio"
+                                    className="text-zinc-500 hover:text-amber-400 transition-colors"
                                   >
-                                    <Edit2 className="w-3 h-3" />
+                                    <Edit2 className="w-3.5 h-3.5" />
                                   </button>
                                 )}
                               </div>
                             )}
                           </div>
                         </td>
-                        <td className="px-6 py-4">
-                          <span className={`text-xs ${license.email === auth.currentUser?.email ? 'text-gray-300' : 'text-purple-400'}`}>
-                            {license.email}
+
+                        <td className="px-6 py-4 text-xs text-zinc-300">
+                          {license.email || "Sin correo"}
+                        </td>
+
+                        <td className="px-6 py-4 text-xs font-medium">
+                          <span
+                            className={
+                              license.type === "trial"
+                                ? "text-amber-400"
+                                : license.type === "reseller"
+                                  ? "text-zinc-200"
+                                  : "text-emerald-400"
+                            }
+                          >
+                            {license.type === "trial"
+                              ? "Prueba PRO (10 días)"
+                              : license.type === "standard"
+                                ? "PRO Estándar"
+                                : license.type === "reseller"
+                                  ? "PRO Reseller"
+                                  : "PRO Ilimitada"}
                           </span>
                         </td>
-                        <td className="px-6 py-4">
-                          <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${
-                            license.type === 'trial' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
-                            license.type === 'standard' ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' :
-                            license.type === 'reseller' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' :
-                            'bg-cyan-500/10 text-cyan-400 border-cyan-500/20'
-                          }`}>
-                            {license.type === 'trial' ? 'Prueba' : license.type === 'standard' ? 'Estándar' : license.type === 'reseller' ? `Reseller` : 'Ilimitado'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-xs text-gray-400 whitespace-nowrap">
+
+                        <td className="px-6 py-4 text-xs text-zinc-400 whitespace-nowrap font-mono tabular-nums">
                           <div className="flex flex-col gap-1">
-                            <span>Creación: {(license.createdAt?.seconds || license.createdAt?._seconds) ? format(new Date((license.createdAt.seconds || license.createdAt._seconds) * 1000), 'MMM dd, yyyy') : '...'}</span>
-                            {license.type === 'trial' && license.expiresAt && (
+                            <span>
+                              Alta:{" "}
+                              {license.createdAt?.seconds ||
+                              license.createdAt?._seconds
+                                ? format(
+                                    new Date(
+                                      (license.createdAt.seconds ||
+                                        license.createdAt._seconds) * 1000
+                                    ),
+                                    "dd/MM/yyyy"
+                                  )
+                                : "..."}
+                            </span>
+                            {license.type === "trial" && license.expiresAt && (
                               <span className="text-amber-400">
-                                Expira: {(license.expiresAt?.seconds || license.expiresAt?._seconds) ? format(new Date((license.expiresAt.seconds || license.expiresAt._seconds) * 1000), 'MMM dd, yyyy') : '...'}
+                                Expira:{" "}
+                                {license.expiresAt?.seconds ||
+                                license.expiresAt?._seconds
+                                  ? format(
+                                      new Date(
+                                        (license.expiresAt.seconds ||
+                                          license.expiresAt._seconds) * 1000
+                                      ),
+                                      "dd/MM/yyyy"
+                                    )
+                                  : "..."}
                               </span>
                             )}
                           </div>
                         </td>
+
                         <td className="px-6 py-4">
-                          {license.status === 'active' ? (
-                            <div className="flex gap-2">
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  if(window.confirm('¿Estás seguro de regenerar la clave? La clave anterior dejará de funcionar.')) {
-                                    handleRegenerateKey(license.id);
-                                  }
-                                }}
-                                className="px-2 py-1 bg-white/5 border border-white/10 rounded text-gray-400 hover:text-white hover:bg-white/10 transition-colors flex items-center gap-1 text-[10px] font-bold uppercase"
-                              >
-                                <RefreshCw className="w-3 h-3" /> Regenerar
-                              </button>
-                              {isReseller && license.createdBy === auth.currentUser?.email && license.email !== auth.currentUser?.email && (
-                                <>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleToggleStatus(license.id, license.status)}
-                                    className="px-2 py-1 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded hover:bg-rose-500/20 transition-colors flex items-center gap-1 text-[10px] font-bold uppercase"
-                                  >
-                                    Revocar
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleDeleteLicense(license.id, license.email)}
-                                    title={deletingLicenseId === license.id ? "Confirmar" : "Eliminar"}
-                                    className={`p-1 rounded transition-colors ${
-                                      deletingLicenseId === license.id 
-                                        ? 'bg-rose-500 text-white animate-pulse' 
-                                        : 'bg-white/5 text-gray-400 hover:bg-rose-500/10 hover:text-rose-500'
-                                    }`}
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </button>
-                                </>
-                              )}
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-2">
-                              <span className="text-rose-500 text-xs font-bold uppercase flex items-center gap-1">
-                                <XCircle className="w-3 h-3" /> Revocada
-                              </span>
-                              {isReseller && license.createdBy === auth.currentUser?.email && license.email !== auth.currentUser?.email && (
-                                <>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleToggleStatus(license.id, license.status)}
-                                    className="px-2 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded hover:bg-emerald-500/20 transition-colors flex items-center gap-1 text-[10px] font-bold uppercase"
-                                  >
-                                    Activar
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleDeleteLicense(license.id, license.email)}
-                                    title={deletingLicenseId === license.id ? "Confirmar" : "Eliminar"}
-                                    className={`p-1 rounded transition-colors ${
-                                      deletingLicenseId === license.id 
-                                        ? 'bg-rose-500 text-white animate-pulse' 
-                                        : 'bg-white/5 text-gray-400 hover:bg-rose-500/10 hover:text-rose-500'
-                                    }`}
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </button>
-                                </>
-                              )}
-                            </div>
-                          )}
+                          <div className="flex items-center justify-end gap-2">
+                            {license.status === "active" ? (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRegenerateKey(license.id)}
+                                  className={`px-2.5 py-1.5 rounded-md border text-xs font-medium inline-flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+                                    regeneratingLicenseId === license.id
+                                      ? "bg-amber-500 text-zinc-950 border-amber-500"
+                                      : "bg-white/[0.04] border-white/10 text-zinc-300 hover:text-white hover:bg-white/[0.08]"
+                                  }`}
+                                >
+                                  <RefreshCw className="w-3.5 h-3.5" />
+                                  {regeneratingLicenseId === license.id
+                                    ? "Confirmar"
+                                    : "Regenerar"}
+                                </button>
+
+                                {isReseller &&
+                                  license.createdBy === auth.currentUser?.email &&
+                                  license.email !== auth.currentUser?.email && (
+                                    <>
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          handleToggleStatus(
+                                            license.id,
+                                            license.status
+                                          )
+                                        }
+                                        className="px-2.5 py-1.5 bg-rose-500/10 text-rose-300 border border-rose-500/25 rounded-md hover:bg-rose-500/20 transition-colors text-xs font-medium"
+                                      >
+                                        Revocar
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          handleDeleteLicense(
+                                            license.id,
+                                            license.email
+                                          )
+                                        }
+                                        title={
+                                          deletingLicenseId === license.id
+                                            ? "Clic de nuevo para eliminar"
+                                            : "Eliminar"
+                                        }
+                                        className={`p-1.5 rounded-md transition-colors ${
+                                          deletingLicenseId === license.id
+                                            ? "bg-rose-500 text-white"
+                                            : "bg-white/[0.04] text-zinc-400 hover:bg-rose-500/15 hover:text-rose-400"
+                                        }`}
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                      </button>
+                                    </>
+                                  )}
+                              </>
+                            ) : (
+                              <>
+                                <span className="text-rose-400 text-xs font-medium inline-flex items-center gap-1">
+                                  <XCircle className="w-3.5 h-3.5" />
+                                  Revocada
+                                </span>
+                                {isReseller &&
+                                  license.createdBy === auth.currentUser?.email &&
+                                  license.email !== auth.currentUser?.email && (
+                                    <>
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          handleToggleStatus(
+                                            license.id,
+                                            license.status
+                                          )
+                                        }
+                                        className="px-2.5 py-1.5 bg-emerald-500/10 text-emerald-300 border border-emerald-500/25 rounded-md hover:bg-emerald-500/20 transition-colors text-xs font-medium"
+                                      >
+                                        Activar
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          handleDeleteLicense(
+                                            license.id,
+                                            license.email
+                                          )
+                                        }
+                                        title={
+                                          deletingLicenseId === license.id
+                                            ? "Clic de nuevo para eliminar"
+                                            : "Eliminar"
+                                        }
+                                        className={`p-1.5 rounded-md transition-colors ${
+                                          deletingLicenseId === license.id
+                                            ? "bg-rose-500 text-white"
+                                            : "bg-white/[0.04] text-zinc-400 hover:bg-rose-500/15 hover:text-rose-400"
+                                        }`}
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                      </button>
+                                    </>
+                                  )}
+                              </>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -635,53 +882,75 @@ export default function Client() {
           )}
 
           {logs.length > 0 && (
-            <div className="onyx-card shrink-0 mt-4">
-              <div className="p-4 border-b border-white/5">
-                <h2 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                  <History className="w-4 h-4 text-cyan-500" />
-                  Historial de Actividad
+            <div className="onyx-card overflow-hidden">
+              <div className="px-6 py-4 border-b border-white/[0.08] flex items-center gap-2">
+                <History className="w-4 h-4 text-amber-400" />
+                <h2 className="font-display text-base font-bold text-white">
+                  Historial de actividad
                 </h2>
               </div>
-              <div className="overflow-x-auto max-h-64">
-                <table className="w-full text-left text-sm text-gray-400">
-                  <thead className="text-xs uppercase bg-black/40 text-gray-500 sticky top-0">
+              <div className="overflow-x-auto max-h-72">
+                <table className="w-full text-left text-sm text-zinc-400 min-w-[540px]">
+                  <thead className="text-xs bg-[#111118] text-zinc-400 sticky top-0 border-b border-white/[0.08]">
                     <tr>
                       <th className="px-6 py-3 font-medium">Acción</th>
                       <th className="px-6 py-3 font-medium">Detalles</th>
                       <th className="px-6 py-3 font-medium">Fecha</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-white/5">
+                  <tbody className="divide-y divide-white/[0.06]">
                     {logs.map((log) => (
-                      <tr key={log.id} className="hover:bg-white/5 transition-colors">
-                        <td className="px-6 py-4">
-                          {log.action === 'created' ? (
-                            <span className="text-emerald-400 font-medium text-xs uppercase tracking-wider">Licencia Generada</span>
-                          ) : log.action === 'created_by_reseller' ? (
-                            <span className="text-purple-400 font-medium text-xs uppercase tracking-wider">Licencia Reseller</span>
-                          ) : log.action === 'key_regenerated' ? (
-                            <span className="text-rose-400 font-medium text-xs uppercase tracking-wider">Clave Regenerada</span>
-                          ) : log.action === 'status_updated' ? (
-                            <span className="text-amber-400 font-medium text-xs uppercase tracking-wider">Estado Cambiado</span>
+                      <tr
+                        key={log.id}
+                        className="hover:bg-white/[0.02] transition-colors"
+                      >
+                        <td className="px-6 py-3.5 text-xs font-medium">
+                          {log.action === "created" ? (
+                            <span className="text-emerald-400">Licencia generada</span>
+                          ) : log.action === "created_by_reseller" ? (
+                            <span className="text-amber-300">Licencia reseller</span>
+                          ) : log.action === "key_regenerated" ? (
+                            <span className="text-rose-400">Clave regenerada</span>
+                          ) : log.action === "status_updated" ? (
+                            <span className="text-amber-400">Estado cambiado</span>
                           ) : (
-                            <span className="text-cyan-400 font-medium text-xs uppercase tracking-wider">Dominio Actualizado</span>
+                            <span className="text-zinc-200">Dominio actualizado</span>
                           )}
                         </td>
-                        <td className="px-6 py-4 text-xs">
-                          {log.action === 'created' ? (
-                            <span>Para el dominio <span className="text-white">{log.newDomain}</span></span>
-                          ) : log.action === 'created_by_reseller' ? (
-                            <span>Generada para <span className="text-white">{log.newDomain}</span></span>
-                          ) : log.action === 'key_regenerated' ? (
-                            <span>Se generó una nueva clave por seguridad</span>
-                          ) : log.action === 'status_updated' ? (
-                            <span>El estado de la licencia cambió</span>
+                        <td className="px-6 py-3.5 text-xs text-zinc-400">
+                          {log.action === "created" ? (
+                            <span>
+                              Dominio <span className="text-white">{log.newDomain}</span>
+                            </span>
+                          ) : log.action === "created_by_reseller" ? (
+                            <span>
+                              Generada para{" "}
+                              <span className="text-white">{log.newDomain}</span>
+                            </span>
+                          ) : log.action === "key_regenerated" ? (
+                            <span>Nueva clave emitida por seguridad</span>
+                          ) : log.action === "status_updated" ? (
+                            <span>Se actualizó el estado de la licencia</span>
                           ) : (
-                            <span>Cambio de <span className="text-gray-500 line-through">{log.oldDomain}</span> a <span className="text-white">{log.newDomain}</span></span>
+                            <span>
+                              Cambio de{" "}
+                              <span className="text-zinc-500 line-through">
+                                {log.oldDomain}
+                              </span>{" "}
+                              a <span className="text-white">{log.newDomain}</span>
+                            </span>
                           )}
                         </td>
-                        <td className="px-6 py-4 text-xs whitespace-nowrap">
-                          {(log.timestamp?.seconds || log.timestamp?._seconds) ? format(new Date((log.timestamp.seconds || log.timestamp._seconds) * 1000), 'dd MMM yyyy, HH:mm') : 'Justo ahora'}
+                        <td className="px-6 py-3.5 text-xs font-mono tabular-nums whitespace-nowrap">
+                          {log.timestamp?.seconds || log.timestamp?._seconds
+                            ? format(
+                                new Date(
+                                  (log.timestamp.seconds ||
+                                    log.timestamp._seconds) * 1000
+                                ),
+                                "dd/MM/yyyy HH:mm"
+                              )
+                            : "Justo ahora"}
                         </td>
                       </tr>
                     ))}
